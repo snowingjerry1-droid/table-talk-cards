@@ -302,7 +302,7 @@ p{margin:0}
    1. 데이터  — 질문·규칙·단계는 여기서만 고치면 됩니다.
    ============================================================ */
 const APP_ID = 'talkcards';
-const STORAGE_KEY = 'talkcards:state:v8';
+const STORAGE_KEY = 'talkcards:state:v9';
 
 const TABLES = {
   count: 10,
@@ -365,7 +365,7 @@ const STAGES = [
     ],
   },
   {
-    id: 'taste', step: 2, name: '취향과 경험', minutes: 20,
+    id: 'taste', step: 2, name: '취향과 경험', minutes: 15,
     color: '#FFE3CF', accent: '#D9834A',
     mood: '좋아하는 것, 해 본 것 얘기해요. 궁금하면 더 물어봐도 돼요.',
     questions: [
@@ -402,7 +402,7 @@ const STAGES = [
     ],
   },
   {
-    id: 'me', step: 3, name: '요즘 사는 얘기', minutes: 15,
+    id: 'me', step: 3, name: '요즘 사는 얘기', minutes: 10,
     color: '#F9D3CC', accent: '#CF6A58',
     mood: '요즘 사는 얘기, 예전 얘기 편하게 해요. 패스해도 괜찮아요.',
     questions: [
@@ -492,7 +492,7 @@ const Storage = {
    ============================================================ */
 function defaultState() {
   return {
-    v: 8,
+    v: 9,
     table: null,
     screen: 'start',
     stageIndex: 0,
