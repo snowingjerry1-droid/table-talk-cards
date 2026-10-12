@@ -302,7 +302,7 @@ p{margin:0}
    1. 데이터  — 질문·규칙·단계는 여기서만 고치면 됩니다.
    ============================================================ */
 const APP_ID = 'talkcards';
-const STORAGE_KEY = 'talkcards:state:v7';
+const STORAGE_KEY = 'talkcards:state:v8';
 
 const TABLES = {
   count: 10,
@@ -327,7 +327,8 @@ const RULES_SHORT = '왼쪽 사람부터 · 더 물어봐도 OK · 어려우면 
    - first: 단계 첫 카드로 항상 나오는 질문 (없으면 생략)
    - last : 단계 마지막 카드로 항상 나오는 질문. 남은 시간이 3분 아래이거나
             다른 질문을 다 쓰면 다음 카드로 나와요. (없으면 생략)
-   - mood : 카드 뒷면에 보이는 단계 안내 한 줄 */
+   - mood : 카드 뒷면에 보이는 단계 안내 한 줄
+   - lastCallMin: 단계 끝 몇 분 전에 "지금 카드까지만" 안내를 띄울지 (없으면 LAST_CALL_MIN) */
 const STAGES = [
   {
     id: 'warmup', step: 1, name: '워밍업', minutes: 10,
@@ -401,7 +402,7 @@ const STAGES = [
     ],
   },
   {
-    id: 'me', step: 3, name: '요즘 사는 얘기', minutes: 20,
+    id: 'me', step: 3, name: '요즘 사는 얘기', minutes: 15,
     color: '#F9D3CC', accent: '#CF6A58',
     mood: '요즘 사는 얘기, 예전 얘기 편하게 해요. 패스해도 괜찮아요.',
     questions: [
@@ -436,12 +437,10 @@ const STAGES = [
     ],
   },
   {
-    id: 'closing', step: 4, name: '마무리', minutes: 10,
+    id: 'closing', step: 4, name: '마무리', minutes: 5, lastCallMin: 2,
     color: '#E6EBD9', accent: '#7D9A6E',
     mood: '오늘 들은 얘기로 마무리해요.',
-    last: { q: '오늘 들은 것 중에 집에 가서 바로 찾아볼 거 하나만 말해 주세요.', hint: '마지막 카드예요. 노래, 영상, 맛집 뭐든 좋아요' },
-    lastDoneTitle: '오늘 대화는 여기까지예요',
-    lastDoneSub: '아래 버튼을 누르면 마무리 화면으로 넘어가요.',
+    first: { q: '오늘 들은 것 중에 집에 가서 바로 찾아볼 거 하나만 말해 주세요.', hint: '노래, 영상, 맛집 뭐든 좋아요' },
     questions: [
       '오늘 여기서 들은 얘기 중에 제일 기억에 남는 게 뭐예요?',
       '오늘 얘기하다가 "어, 나도!" 했던 거 있어요?',
@@ -457,8 +456,9 @@ const STAGES = [
   },
 ];
 
-// 단계 끝 몇 분 전에 "이번 카드까지만" 안내를 띄울지
+// 단계 끝 몇 분 전에 "이번 카드까지만" 안내를 띄울지 (단계별 lastCallMin이 있으면 그 값)
 const LAST_CALL_MIN = 3;
+const lastCallMs = st => (st.lastCallMin || LAST_CALL_MIN) * 60000;
 
 // 카드 덱 만들기: [첫 카드, ...질문, 마지막 카드]. 뽑은 기록은 이 순서의 번호로 저장
 STAGES.forEach(st => {
@@ -492,7 +492,7 @@ const Storage = {
    ============================================================ */
 function defaultState() {
   return {
-    v: 7,
+    v: 8,
     table: null,
     screen: 'start',
     stageIndex: 0,
@@ -666,7 +666,7 @@ Screens.cards = {
     return t ? t.endsAt - Date.now() : Infinity;
   },
   // 첫 카드 고정 → 나머지는 아직 안 나온 질문 중 무작위 → 마지막 카드는
-  // 남은 시간이 LAST_CALL_MIN분 아래이거나 다른 질문을 다 썼을 때 나옴
+  // 남은 시간이 lastCallMin분 아래이거나 다른 질문을 다 썼을 때 나옴
   draw(stage, reveal) {
     const deck = stage.deck;
     const used = S.used[stage.id] || (S.used[stage.id] = []);
@@ -677,7 +677,7 @@ Screens.cards = {
     else if (firstIdx >= 0 && !used.includes(firstIdx)) idx = firstIdx;
     else {
       const pool = deck.map((_, i) => i).filter(i => !used.includes(i) && i !== lastIdx);
-      if (lastIdx >= 0 && (!pool.length || this.remaining(stage) <= LAST_CALL_MIN * 60000)) idx = lastIdx;
+      if (lastIdx >= 0 && (!pool.length || this.remaining(stage) <= lastCallMs(stage))) idx = lastIdx;
       else if (pool.length) idx = pool[Math.floor(Math.random() * pool.length)];
     }
     if (idx === null) {
@@ -793,13 +793,13 @@ Screens.cards = {
     el.classList.toggle('is-low', rem > 0 && rem <= 60000);
     el.classList.toggle('is-over', rem <= 0);
     $('stageBanner').hidden = rem > 0;
-    const lastCall = rem > 0 && rem <= LAST_CALL_MIN * 60000;
+    const lastCall = rem > 0 && rem <= lastCallMs(stage);
     if (lastCall) {
       const lastIdx = stage.deck.findIndex(c => c.pin === 'last');
       const lastPending = lastIdx >= 0 && !(S.used[stage.id] || []).includes(lastIdx);
       $('lastCallBanner').textContent = lastPending
-        ? `⏳ ${LAST_CALL_MIN}분쯤 남았어요. 다음에 뽑는 카드가 마지막 카드예요.`
-        : `⏳ ${LAST_CALL_MIN}분쯤 남았어요. 지금 카드까지만 하고 넘어가요.`;
+        ? `⏳ ${lastCallMs(stage) / 60000}분쯤 남았어요. 다음에 뽑는 카드가 마지막 카드예요.`
+        : `⏳ ${lastCallMs(stage) / 60000}분쯤 남았어요. 지금 카드까지만 하고 넘어가요.`;
     }
     $('lastCallBanner').hidden = !lastCall;
     if (rem <= 0 && !S.timeUpSeen[stage.id]) {
