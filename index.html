@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#FBF6EE">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>테이블 대화 카드</title>
+<!-- 무료 웹폰트. 네트워크가 없으면 아래 font-family의 시스템 폰트로 자동 대체 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+/* ============================================================
+   디자인 토큰
+   ============================================================ */
+:root{
+  --bg:#FBF6EE;
+  --surface:#FFFDF9;
+  --ink:#3B302B;
+  --muted:#8C7D75;
+  --line:#EBE0D4;
+  --coral:#E4836C;
+  --coral-deep:#D2694F;
+  --coral-soft:#FBE6DE;
+  --sage:#7FA27A;
+  --shadow:0 12px 32px rgba(95,64,44,.12);
+  /* 단계별로 JS가 바꿔 주는 값 */
+  --stage-card:#FFF4D6;
+  --stage-accent:#D9A93B;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.5;
+  -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere;
+}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer}
+[hidden]{display:none !important}
+
+/* ============================================================
+   공통 레이아웃
+   ============================================================ */
+.screen{
+  display:none;flex-direction:column;min-height:100dvh;max-width:520px;margin:0 auto;
+  padding:calc(14px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+}
+.screen.is-active{display:flex;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.eyebrow{font-size:14px;font-weight:700;letter-spacing:.02em;color:var(--coral-deep)}
+h1{font-size:30px;font-weight:800;line-height:1.25;margin:6px 0 10px}
+h2{font-size:22px;font-weight:800;margin:0 0 8px;line-height:1.3}
+p{margin:0}
+.lead{font-size:17px;color:var(--muted)}
+.spacer{flex:1}
+.center{text-align:center}
+
+/* 버튼 */
+.btn{
+  display:flex;align-items:center;justify-content:center;width:100%;min-height:60px;padding:14px 20px;
+  border-radius:18px;font-size:19px;font-weight:700;user-select:none;
+  transition:transform .08s ease,opacity .2s,background .2s;
+}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn-primary{background:var(--coral);color:#fff;box-shadow:0 8px 20px rgba(228,131,108,.32)}
+.btn-primary:active{background:var(--coral-deep)}
+.btn-ghost{background:var(--surface);border:1.5px solid var(--line);color:var(--ink)}
+.btn-text{min-height:44px;font-size:15px;font-weight:600;color:var(--muted);padding:8px 14px;border-radius:12px}
+.btn-text:active{color:var(--ink);background:rgba(0,0,0,.04)}
+.btn-text:disabled{opacity:.3}
+
+/* 상단 바 + 타이머 */
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-right:48px}
+.topbar-title{font-size:21px;font-weight:800;line-height:1.2}
+.timer{
+  font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.01em;line-height:1;
+  padding:6px 0;color:var(--ink);white-space:nowrap;
+}
+.timer.is-low{color:var(--coral-deep)}
+.timer.is-over{color:var(--coral-deep);animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.35}}
+
+/* 전체 진행 바 (4단계, 분 단위 비례) */
+.progress{display:flex;gap:4px;margin:12px 0 8px}
+.progress-seg{height:6px;border-radius:3px;background:var(--line);overflow:hidden;position:relative}
+.progress-seg>i{display:block;height:100%;width:0;background:var(--coral);border-radius:3px;transition:width .5s linear}
+.progress-seg.is-current>i{background:var(--coral-deep)}
+
+/* 알림 배너 */
+.banner{
+  background:var(--coral-soft);border:1.5px solid rgba(210,105,79,.35);color:var(--coral-deep);
+  border-radius:14px;padding:12px 14px;font-size:16px;font-weight:700;margin:6px 0 4px;
+  animation:popIn .3s ease;
+}
+.banner-soft{background:var(--surface);border-color:var(--line);color:var(--ink)}
+@keyframes popIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+
+/* 설정 톱니 + 시트 */
+.gear{
+  position:fixed;top:calc(10px + env(safe-area-inset-top));right:14px;z-index:30;
+  width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);border:1.5px solid var(--line);color:var(--muted);font-size:20px;
+}
+.sheet-backdrop{position:fixed;inset:0;background:rgba(59,48,43,.35);z-index:40;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease}
+.sheet{
+  width:100%;max-width:520px;background:var(--surface);border-radius:24px 24px 0 0;
+  padding:18px 20px calc(24px + env(safe-area-inset-bottom));box-shadow:var(--shadow);
+}
+.sheet h2{font-size:18px;margin-bottom:4px}
+.sheet .meta{font-size:14px;color:var(--muted);margin-bottom:14px}
+.sheet .btn{min-height:52px;font-size:17px;margin-top:8px}
+.btn-danger{background:#FFF1EE;color:var(--coral-deep);border:1.5px solid rgba(210,105,79,.3)}
+
+/* ============================================================
+   1. 시작 화면
+   ============================================================ */
+.table-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0 18px}
+.table-btn{
+  display:flex;align-items:center;justify-content:space-between;min-height:62px;padding:10px 16px;
+  border-radius:16px;background:var(--surface);border:2px solid var(--line);transition:all .15s;
+}
+.table-btn b{font-size:22px;font-weight:800}
+.table-btn span{font-size:14px;color:var(--muted);font-weight:600}
+.table-btn.is-selected{border-color:var(--coral);background:var(--coral-soft)}
+.table-btn.is-selected span{color:var(--coral-deep)}
+
+/* ============================================================
+   2. 규칙 화면
+   ============================================================ */
+.rules{list-style:none;padding:0;margin:14px 0 20px;counter-reset:r}
+.rules li{
+  counter-increment:r;display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);
+  font-size:19px;font-weight:600;line-height:1.45;
+}
+.rules li::before{
+  content:counter(r);flex:0 0 32px;height:32px;border-radius:50%;background:var(--coral-soft);color:var(--coral-deep);
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;margin-top:2px;
+}
+.rules.is-mini li{font-size:15px;font-weight:500;padding:8px 0;color:var(--muted)}
+.rules.is-mini li::before{flex-basis:24px;height:24px;font-size:12px}
+.stage-list{list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:8px}
+.stage-list li{display:flex;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:10px 14px;font-size:16px;font-weight:600}
+.stage-list i{width:14px;height:14px;border-radius:4px;flex:0 0 14px}
+.stage-list span{margin-left:auto;color:var(--muted);font-weight:600;font-size:14px}
+
+/* ============================================================
+   3. 대화 카드 화면
+   ============================================================ */
+.card-scene{perspective:1400px;flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0 6px;min-height:300px}
+.card{
+  position:relative;width:100%;max-width:400px;aspect-ratio:3/4;max-height:50dvh;
+  transform-style:preserve-3d;transition:transform .6s cubic-bezier(.4,.1,.2,1);cursor:pointer;user-select:none;
+}
+.card.is-flipped{transform:rotateY(180deg)}
+.card-face{
+  position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border-radius:28px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:28px 24px;text-align:center;
+}
+.card-back{
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,.35) 0 18%, transparent 19%),
+    radial-gradient(circle at 80% 75%, rgba(255,255,255,.28) 0 22%, transparent 23%),
+    linear-gradient(145deg, var(--stage-card), color-mix(in srgb, var(--stage-card) 70%, var(--stage-accent)));
+  border:6px solid var(--surface);
+}
+.card-back-mark{
+  width:92px;height:92px;border-radius:50%;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;
+  font-size:44px;font-weight:900;color:var(--stage-accent);margin-bottom:18px;box-shadow:0 6px 16px rgba(0,0,0,.06);
+}
+.card-back-mood{font-size:19px;font-weight:700;line-height:1.45;color:var(--ink);max-width:260px;margin-bottom:14px}
+.card-back-hint{font-size:16px;font-weight:700;color:var(--ink);opacity:.6}
+.card-back-tap{margin-top:6px;font-size:14px;color:var(--ink);opacity:.5}
+.card-front{transform:rotateY(180deg);background:var(--stage-card);border:6px solid var(--surface)}
+.card-stage{font-size:14px;font-weight:800;color:var(--stage-accent);letter-spacing:.03em;position:absolute;top:22px}
+.question{font-size:clamp(28px,7.4vw,38px);font-weight:800;line-height:1.35;color:var(--ink)}
+.question-sub{margin-top:12px;font-size:16px;color:var(--muted);font-weight:600}
+.card-count{position:absolute;bottom:18px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card-hint{text-align:center;font-size:15px;color:var(--muted);font-weight:600;margin:4px 0 12px}
+.actions{display:flex;flex-direction:column;align-items:center;gap:6px}
+.stage-nav{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.stage-nav .btn-text{font-size:14px;padding:8px 10px}
+.dots{display:flex;gap:6px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dots i.is-done{background:var(--coral);opacity:.45}
+.dots i.is-current{background:var(--coral-deep);transform:scale(1.25)}
+.rules-mini{margin-top:6px}
+.rules-mini .btn-text{width:100%;font-size:14px}
+
+/* ============================================================
+   4. 마무리 화면
+   ============================================================ */
+.summary{background:var(--surface);border:1.5px solid var(--line);border-radius:22px;padding:20px;box-shadow:var(--shadow);margin:14px 0}
+.summary .label{font-size:14px;font-weight:700;color:var(--muted);margin-bottom:10px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:var(--bg);border-radius:14px;padding:12px 14px}
+.stat b{display:block;font-size:24px;font-weight:800;line-height:1.1}
+.stat span{font-size:13px;color:var(--muted);font-weight:600}
+.stage-summary{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.stage-summary li{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.stage-summary i{width:12px;height:12px;border-radius:3px;flex:0 0 12px}
+.stage-summary span{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<!-- 설정 톱니 (시작 화면 외에서 표시) -->
+<button class="gear" id="gearBtn" aria-label="설정" hidden>⚙︎</button>
+
+<!-- ============ 1. 시작 화면 ============ -->
+<section class="screen" data-screen="start">
+  <div class="eyebrow">테이블 대화 카드</div>
+  <h1>우리 테이블은<br>몇 번인가요?</h1>
+  <p class="lead">폰을 테이블 가운데에 두고 다 같이 봐요.</p>
+  <div class="table-grid" id="tableGrid"></div>
+  <div class="spacer"></div>
+  <button class="btn btn-primary" id="startBtn" disabled>시작하기</button>
+</section>
+
+<!-- ============ 2. 규칙 안내 ============ -->
+<section class="screen" data-screen="rules">
+  <div class="eyebrow" id="rulesTable">테이블</div>
+  <h1>대화 규칙</h1>
+  <p class="lead">편하게 얘기하면 돼요.</p>
+  <ol class="rules" id="rulesList"></ol>
+  <ul class="stage-list" id="stageList"></ul>
+  <div class="spacer"></div>
+  <button class="btn btn-primary" id="rulesOkBtn">알겠어요</button>
+</section>
+
+<!-- ============ 3. 대화 카드 ============ -->
+<section class="screen" data-screen="cards">
+  <header class="topbar">
+    <div>
+      <div class="eyebrow" id="stageStep"></div>
+      <div class="topbar-title" id="stageName"></div>
+    </div>
+    <div class="timer" id="stageTimer">00:00</div>
+  </header>
+  <div class="progress" id="cardsProgress"></div>
+  <div class="banner banner-soft" id="lastCallBanner" hidden></div>
+  <div class="banner" id="stageBanner" hidden>⏰ 다음 단계로 넘어갈 시간이에요. 지금 답하는 분까지 듣고 넘어가요.</div>
+
+  <div class="card-scene">
+    <div class="card" id="card" role="button" aria-label="카드 뒤집기">
+      <div class="card-face card-back">
+        <div class="card-back-mark">?</div>
+        <div class="card-back-mood" id="cardMood"></div>
+        <div class="card-back-hint">탭해서 질문 보기</div>
+        <div class="card-back-tap">카드를 뽑은 사람이 뒤집어요</div>
+      </div>
+      <div class="card-face card-front">
+        <div class="card-stage" id="cardStageLabel"></div>
+        <div>
+          <div class="question" id="questionText"></div>
+          <div class="question-sub" id="questionSub" hidden></div>
+        </div>
+        <div class="card-count" id="cardCount"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="card-hint" id="cardHint"></p>
+  <div class="actions">
+    <button class="btn btn-primary" id="drawBtn">다음 카드 뽑기</button>
+    <button class="btn-text" id="swapBtn">🔄 카드 바꾸기</button>
+  </div>
+
+  <nav class="stage-nav">
+    <button class="btn-text" id="prevStageBtn">‹ 이전 단계</button>
+    <div class="dots" id="stageDots"></div>
+    <button class="btn-text" id="nextStageBtn">다음 단계 ›</button>
+  </nav>
+
+  <footer class="rules-mini">
+    <button class="btn-text" id="rulesToggle">대화 규칙 보기 ▾</button>
+    <ol class="rules is-mini" id="rulesMini" hidden></ol>
+  </footer>
+</section>
+
+<!-- ============ 4. 마무리 ============ -->
+<section class="screen" data-screen="finish">
+  <div class="eyebrow" id="finishEyebrow">오늘 우리 테이블</div>
+  <h1>다들<br>반가웠어요</h1>
+  <p class="lead">오늘 우리 테이블은 이만큼 얘기했어요.</p>
+  <div class="summary">
+    <div class="label">단계별 카드</div>
+    <div class="stats">
+      <div class="stat"><b id="statCards">0장</b><span>얘기한 카드</span></div>
+      <div class="stat"><b id="statTime">0분</b><span>대화한 시간</span></div>
+    </div>
+    <ul class="stage-summary" id="stageSummary"></ul>
+  </div>
+  <p class="lead center" style="font-size:16px">남은 시간은 편하게 얘기해요.</p>
+  <div class="spacer"></div>
+  <button class="btn btn-ghost" id="finishBackBtn">마지막 단계로 돌아가기</button>
+</section>
+
+<script>
+/* ============================================================
+   1. 데이터  — 질문·규칙·단계는 여기서만 고치면 됩니다.
+   ============================================================ */
+const APP_ID = 'talkcards';
+const STORAGE_KEY = 'talkcards:state:v7';
+
+const TABLES = {
+  count: 10,
+  seats(n) { return n >= 9 ? 8 : 6; },   // 1~8번 6인, 9~10번 8인
+};
+
+const RULES = [
+  '카드를 뽑은 사람의 왼쪽부터 돌아가며 모두 같은 질문에 답해요.',
+  '먼저 말하기 어려우면 "마지막에 할게요"라고 말해도 괜찮아요.',
+  '한 단어로 답해도 충분해요. 이유는 말하고 싶을 때만.',
+  '더 궁금한 게 있으면 계속 물어봐도 돼요.',
+  '나이, 직업, 연애는 오늘은 안 물어봐요.',
+  '답하기 어려운 질문은 "패스"라고 말하면 돼요.',
+  '테이블 모두가 이 질문은 별로다 싶으면 "카드 바꾸기"를 눌러요.',
+  '다 돌았으면 다음 사람이 새 카드를 뽑아요.',
+];
+const RULES_SHORT = '왼쪽 사람부터 · 더 물어봐도 OK · 어려우면 패스';
+
+/* 질문 쓰는 법
+   - 그냥 문자열: '질문'
+   - 예시 문구까지: { q: '질문', hint: '카드 아래 작게 보이는 예시' }
+   - first: 단계 첫 카드로 항상 나오는 질문 (없으면 생략)
+   - last : 단계 마지막 카드로 항상 나오는 질문. 남은 시간이 3분 아래이거나
+            다른 질문을 다 쓰면 다음 카드로 나와요. (없으면 생략)
+   - mood : 카드 뒷면에 보이는 단계 안내 한 줄 */
+const STAGES = [
+  {
+    id: 'warmup', step: 1, name: '워밍업', minutes: 10,
+    color: '#FFF4D6', accent: '#CFA23A',
+    mood: '가볍게 시작해요. 짧게 답해도 괜찮아요.',
+    questions: [
+      { q: 'MBTI가 뭐예요?', hint: '모르면 느낌으로 말해도 돼요' },
+      '오늘 여기 어떻게 오게 됐어요?',
+      '오늘 여기 오기 전에 뭐 하다 왔어요?',
+      '고향이 어디예요?',
+      { q: '사는 동네는 어느 쪽이에요?', hint: '대충 어느 쪽인지만요' },
+      '쉬는 날엔 보통 뭐 해요?',
+      '저녁에 집에 가면 주로 뭐 해요?',
+      '보통 몇 시쯤 자요?',
+      '주말 아침에 일어나면 제일 먼저 뭐 해요?',
+      '일주일 중에 제일 좋아하는 요일이 언제예요?',
+      '요즘 제일 자주 먹는 음식이 뭐예요?',
+      '최근에 맛있게 먹은 거 뭐예요?',
+      '못 먹는 음식 있어요?',
+      '좋아하는 간식이 뭐예요?',
+      '커피 좋아해요? 하루에 몇 잔 마셔요?',
+      '카페 가면 주로 뭐 마셔요?',
+      '요즘 자주 듣는 노래가 뭐예요?',
+      '요즘 보는 드라마나 예능 있어요?',
+      '요즘 유튜브에서 주로 뭐 봐요?',
+      { q: '반려동물 키워요?', hint: '안 키우면 키우고 싶은 동물도 좋아요' },
+      { q: '운동하는 거 있어요?', hint: '안 하면 해 보고 싶은 것도 좋아요' },
+      { q: '최근에 여행 어디 다녀왔어요?', hint: '가까운 나들이도 좋아요' },
+      '요즘 같은 날씨에 뭐 하고 싶어요?',
+      '최근에 산 것 중에 제일 잘 산 게 뭐예요?',
+      '요즘 제일 갖고 싶은 게 뭐예요?',
+      '최근에 제일 웃겼던 일이 뭐예요?',
+      '형제 관계가 어떻게 돼요?',
+    ],
+  },
+  {
+    id: 'taste', step: 2, name: '취향과 경험', minutes: 20,
+    color: '#FFE3CF', accent: '#D9834A',
+    mood: '좋아하는 것, 해 본 것 얘기해요. 궁금하면 더 물어봐도 돼요.',
+    questions: [
+      '요즘 빠져 있는 거 있어요?',
+      { q: '취미가 뭐예요?', hint: '딱히 없으면 요즘 자주 하는 거라도요' },
+      '해 보고 싶은 취미 있어요?',
+      '최근에 본 영화나 드라마 중에 재밌었던 거 뭐예요?',
+      '몇 번씩 다시 본 영화나 드라마 있어요?',
+      '좋아하는 가수나 노래 있어요?',
+      { q: '노래방 가면 주로 뭐 불러요?', hint: '노래방 안 가면 넘어가도 돼요' },
+      '최근에 간 맛집 중에 추천할 데 있어요?',
+      '배달 시키면 주로 뭐 시켜요?',
+      '요리 자주 해요? 잘하는 메뉴 있어요?',
+      { q: '라면 끓일 때 꼭 넣는 거 있어요?', hint: '없으면 좋아하는 라면도 좋아요' },
+      '편의점 가면 꼭 사는 거 있어요?',
+      '지금까지 가 본 여행지 중에 제일 좋았던 데가 어디예요?',
+      '다음에 여행 가고 싶은 곳 있어요?',
+      '쉬는 날 혼자 놀면 주로 뭐 해요?',
+      '친구들 만나면 주로 뭐 해요?',
+      '요즘 자주 하는 게임 있어요?',
+      '어릴 때 좋아했던 과자나 간식이 뭐예요?',
+      '학교 다닐 때 쉬는 시간에 주로 뭐 했어요?',
+      '어릴 때 자주 하던 놀이가 뭐예요?',
+      '배워 보고 싶은 거 있어요?',
+      '공연이나 페스티벌 가 본 적 있어요? 어땠어요?',
+      '좋아하는 스포츠나 응원하는 팀 있어요?',
+      '로또 되면 제일 먼저 뭐 할 거예요?',
+      '하루가 통째로 비면 뭐 할 거예요?',
+      '최근에 읽은 책이나 웹툰 있어요?',
+      '좋아하는 술이나 음료 있어요?',
+      '주말에 가기 좋은 근교 추천해 줄 데 있어요?',
+      '요즘 자주 쓰는 앱 중에 추천할 거 있어요?',
+      '어릴 때 살던 동네는 어땠어요?',
+    ],
+  },
+  {
+    id: 'me', step: 3, name: '요즘 사는 얘기', minutes: 20,
+    color: '#F9D3CC', accent: '#CF6A58',
+    mood: '요즘 사는 얘기, 예전 얘기 편하게 해요. 패스해도 괜찮아요.',
+    questions: [
+      '요즘 제일 재밌는 게 뭐예요?',
+      '올해 가기 전에 하고 싶은 거 있어요?',
+      '스트레스 받으면 주로 뭐 해요?',
+      '기분 꿀꿀할 때 주로 뭐 먹어요?',
+      '요즘 제일 자주 연락하는 친구랑은 어떻게 친해졌어요?',
+      '최근에 처음 해 본 거 있어요?',
+      '어릴 때 무서워했던 거 있어요?',
+      '어릴 때 혼났던 일 중에 지금 생각하면 웃긴 거 있어요?',
+      '학교 다닐 때 좋아했던 과목 있어요?',
+      '최근에 돈 쓴 것 중에 제일 아까웠던 거 뭐예요?',
+      '요즘 제일 자주 쓰는 물건이 뭐예요?',
+      '집에서 제일 좋아하는 공간이 어디예요?',
+      '여행 가서 생긴 웃긴 일 있어요?',
+      '살면서 제일 맛있었던 음식이 뭐예요?',
+      '최근에 친구랑 제일 재밌게 논 날 뭐 했어요?',
+      '요즘 보고 싶은 영화나 전시 있어요?',
+      '요즘 새로 생긴 습관 있어요?',
+      '누가 추천해 줘서 써 봤는데 좋았던 거 있어요?',
+      '다들 별로라는데 혼자 좋아하는 거 있어요?',
+      '의외로 잘하는 거 있어요?',
+      '하루 중에 제일 좋아하는 시간이 언제예요?',
+      { q: '요즘 제일 기다려지는 게 뭐예요?', hint: '약속, 여행, 택배 뭐든요' },
+      '받으면 기분 좋은 선물이 뭐예요?',
+      '집 말고 요즘 제일 자주 가는 곳이 어디예요?',
+      { q: '잘 때 꼭 있어야 하는 거 있어요?', hint: '예: 수면 안대, 애착 인형' },
+      '휴대폰 사진첩에 제일 많은 사진이 뭐예요?',
+      '요즘 꽂힌 음식이나 가게 있어요?',
+      '처음엔 별로였는데 지금은 좋아하게 된 거 있어요?',
+    ],
+  },
+  {
+    id: 'closing', step: 4, name: '마무리', minutes: 10,
+    color: '#E6EBD9', accent: '#7D9A6E',
+    mood: '오늘 들은 얘기로 마무리해요.',
+    last: { q: '오늘 들은 것 중에 집에 가서 바로 찾아볼 거 하나만 말해 주세요.', hint: '마지막 카드예요. 노래, 영상, 맛집 뭐든 좋아요' },
+    lastDoneTitle: '오늘 대화는 여기까지예요',
+    lastDoneSub: '아래 버튼을 누르면 마무리 화면으로 넘어가요.',
+    questions: [
+      '오늘 여기서 들은 얘기 중에 제일 기억에 남는 게 뭐예요?',
+      '오늘 얘기하다가 "어, 나도!" 했던 거 있어요?',
+      '오늘 얘기 중에 제일 웃겼던 게 뭐예요?',
+      '오늘 들은 얘기 중에 의외였던 거 있어요?',
+      '오늘 알게 된 우리 테이블 공통점, 또 뭐가 있었어요?',
+      '여기 사람들한테 하나 추천해 주고 싶은 게 뭐예요?',
+      '오늘 듣고 나서 해 보고 싶어진 거 있어요?',
+      '오늘 누구한테 더 물어보고 싶었던 거 있어요?',
+      '이 테이블 사람들이랑 같이 하면 재밌을 것 같은 게 뭐예요?',
+      '이 멤버로 다시 모이면 뭐 하고 놀까요?',
+    ],
+  },
+];
+
+// 단계 끝 몇 분 전에 "이번 카드까지만" 안내를 띄울지
+const LAST_CALL_MIN = 3;
+
+// 카드 덱 만들기: [첫 카드, ...질문, 마지막 카드]. 뽑은 기록은 이 순서의 번호로 저장
+STAGES.forEach(st => {
+  const norm = (item, pin) => (typeof item === 'string' ? { q: item } : { ...item, ...(pin ? { pin } : {}) });
+  st.deck = [
+    ...(st.first ? [norm(st.first, 'first')] : []),
+    ...st.questions.map(x => norm(x)),
+    ...(st.last ? [norm(st.last, 'last')] : []),
+  ];
+});
+
+/* ============================================================
+   2. 저장소 — localStorage 접근은 전부 여기서만 (try/catch)
+   ============================================================ */
+const Storage = {
+  get(key) {
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }
+    catch (e) { return null; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (e) { return false; }
+  },
+  remove(key) {
+    try { localStorage.removeItem(key); } catch (e) {}
+  },
+};
+
+/* ============================================================
+   3. 진행 상태 — 새로고침해도 이어지도록 통째로 저장
+   ============================================================ */
+function defaultState() {
+  return {
+    v: 7,
+    table: null,
+    screen: 'start',
+    stageIndex: 0,
+    used: {},       // { stageId: [질문 index...] }  뽑은 카드
+    swapped: {},    // { stageId: [질문 index...] }  바꾼 카드
+    current: null,  // { stageId, idx, revealed, exhausted }
+    timers: {},     // { stageId: { startedAt, endsAt } }
+    timeUpSeen: {}, // { stageId: true }  진동은 단계당 1회만
+    startedAt: null,
+  };
+}
+function loadState() {
+  const base = defaultState();
+  const saved = Storage.get(STORAGE_KEY);
+  if (!saved || saved.v !== base.v) return base;
+  return { ...base, ...saved };
+}
+let S = loadState();
+function save() { Storage.set(STORAGE_KEY, S); }
+function resetAll() {
+  S = defaultState();
+  Storage.remove(STORAGE_KEY);
+  selectedTable = tableFromUrl();
+  Screens.start.render();
+  go('start');
+}
+
+/* ============================================================
+   4. 유틸
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const clamp01 = n => Math.max(0, Math.min(1, n));
+function fmtTime(ms) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+function vibrate(pattern) { try { navigator.vibrate && navigator.vibrate(pattern || [200, 100, 200]); } catch (e) {} }
+function currentStage() { return STAGES[S.stageIndex]; }
+
+// 화면 꺼짐 방지. 지원 안 되면 조용히 무시
+const WakeLock = {
+  lock: null,
+  async request() {
+    try {
+      if (!('wakeLock' in navigator)) return;
+      if (this.lock && !this.lock.released) return;
+      this.lock = await navigator.wakeLock.request('screen');
+    } catch (e) {}
+  },
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && S.table) WakeLock.request();
+});
+
+// 전체 진행 바: 4단계, 각 칸 너비는 분 단위 비례
+function renderProgress(el) {
+  if (!el.children.length) {
+    STAGES.forEach(st => {
+      const seg = document.createElement('div');
+      seg.className = 'progress-seg';
+      seg.style.flex = String(st.minutes);
+      seg.innerHTML = '<i></i>';
+      el.appendChild(seg);
+    });
+  }
+  const now = Date.now();
+  STAGES.forEach((st, i) => {
+    let frac = 0, current = false;
+    if (S.screen === 'finish' || i < S.stageIndex) frac = 1;
+    else if (i === S.stageIndex) {
+      const t = S.timers[st.id];
+      frac = t ? clamp01((now - t.startedAt) / (st.minutes * 60000)) : 0;
+      current = true;
+    }
+    const seg = el.children[i];
+    seg.classList.toggle('is-current', current);
+    seg.firstChild.style.width = (frac * 100) + '%';
+  });
+}
+
+/* ============================================================
+   5. 화면
+   ============================================================ */
+const Screens = {};
+let selectedTable = null;
+
+function go(name) {
+  S.screen = name;
+  save();
+  document.querySelectorAll('.screen').forEach(el => el.classList.toggle('is-active', el.dataset.screen === name));
+  $('gearBtn').hidden = (name === 'start');
+  window.scrollTo(0, 0);
+  if (Screens[name] && Screens[name].enter) Screens[name].enter();
+}
+
+/* ---------- 시작 ---------- */
+Screens.start = {
+  init() {
+    this.render();
+    $('startBtn').addEventListener('click', () => {
+      if (!selectedTable) return;
+      S.table = selectedTable;
+      S.startedAt = Date.now();
+      save();
+      WakeLock.request();
+      go('rules');
+    });
+  },
+  render() {
+    const grid = $('tableGrid');
+    grid.innerHTML = '';
+    for (let n = 1; n <= TABLES.count; n++) {
+      const b = document.createElement('button');
+      b.className = 'table-btn' + (selectedTable === n ? ' is-selected' : '');
+      b.innerHTML = `<b>${n}번</b><span>${TABLES.seats(n)}인 테이블</span>`;
+      b.addEventListener('click', () => {
+        selectedTable = n;
+        grid.querySelectorAll('.table-btn').forEach((el, i) => el.classList.toggle('is-selected', i + 1 === n));
+        $('startBtn').disabled = false;
+      });
+      grid.appendChild(b);
+    }
+    $('startBtn').disabled = !selectedTable;
+  },
+};
+
+/* ---------- 규칙 ---------- */
+Screens.rules = {
+  init() {
+    $('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+    $('stageList').innerHTML = STAGES.map(st =>
+      `<li><i style="background:${st.accent}"></i>${st.step}단계 · ${st.name}<span>${st.minutes}분</span></li>`).join('');
+    $('rulesOkBtn').addEventListener('click', () => go('cards'));
+  },
+  enter() {
+    $('rulesTable').textContent = `${S.table}번 테이블 · ${TABLES.seats(S.table)}명`;
+  },
+};
+
+/* ---------- 대화 카드 ---------- */
+Screens.cards = {
+  busy: false,
+  init() {
+    $('cardHint').textContent = RULES_SHORT;
+    $('rulesMini').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+    $('rulesToggle').addEventListener('click', () => {
+      const list = $('rulesMini');
+      list.hidden = !list.hidden;
+      $('rulesToggle').textContent = list.hidden ? '대화 규칙 보기 ▾' : '대화 규칙 접기 ▴';
+    });
+    $('card').addEventListener('click', () => this.reveal());
+    $('drawBtn').addEventListener('click', () => this.onDraw());
+    $('swapBtn').addEventListener('click', () => this.swap());
+    $('prevStageBtn').addEventListener('click', () => this.setStage(S.stageIndex - 1));
+    $('nextStageBtn').addEventListener('click', () => this.nextStage());
+  },
+  enter() {
+    const stage = currentStage();
+    if (!S.timers[stage.id]) {
+      const startedAt = Date.now();
+      S.timers[stage.id] = { startedAt, endsAt: startedAt + stage.minutes * 60000 };
+    }
+    if (!S.current || S.current.stageId !== stage.id) this.draw(stage, false);
+    save();
+    this.renderStage();
+    this.renderCard(true);
+    this.tick();
+  },
+  remaining(stage) {
+    const t = S.timers[stage.id];
+    return t ? t.endsAt - Date.now() : Infinity;
+  },
+  // 첫 카드 고정 → 나머지는 아직 안 나온 질문 중 무작위 → 마지막 카드는
+  // 남은 시간이 LAST_CALL_MIN분 아래이거나 다른 질문을 다 썼을 때 나옴
+  draw(stage, reveal) {
+    const deck = stage.deck;
+    const used = S.used[stage.id] || (S.used[stage.id] = []);
+    const firstIdx = deck.findIndex(c => c.pin === 'first');
+    const lastIdx = deck.findIndex(c => c.pin === 'last');
+    let idx = null;
+    if (lastIdx >= 0 && used.includes(lastIdx)) idx = null;
+    else if (firstIdx >= 0 && !used.includes(firstIdx)) idx = firstIdx;
+    else {
+      const pool = deck.map((_, i) => i).filter(i => !used.includes(i) && i !== lastIdx);
+      if (lastIdx >= 0 && (!pool.length || this.remaining(stage) <= LAST_CALL_MIN * 60000)) idx = lastIdx;
+      else if (pool.length) idx = pool[Math.floor(Math.random() * pool.length)];
+    }
+    if (idx === null) {
+      S.current = { stageId: stage.id, idx: null, revealed: true, exhausted: true };
+      return;
+    }
+    used.push(idx);
+    S.current = { stageId: stage.id, idx, revealed: !!reveal, exhausted: false };
+  },
+  renderStage() {
+    const stage = currentStage();
+    document.documentElement.style.setProperty('--stage-card', stage.color);
+    document.documentElement.style.setProperty('--stage-accent', stage.accent);
+    $('stageStep').textContent = `${stage.step}단계 · ${stage.minutes}분`;
+    $('stageName').textContent = stage.name;
+    $('cardStageLabel').textContent = `${stage.step}단계 · ${stage.name}`;
+    $('cardMood').textContent = stage.mood || '';
+    $('stageDots').innerHTML = STAGES.map((_, i) =>
+      `<i class="${i < S.stageIndex ? 'is-done' : i === S.stageIndex ? 'is-current' : ''}"></i>`).join('');
+    $('prevStageBtn').disabled = S.stageIndex === 0;
+    $('nextStageBtn').textContent = S.stageIndex === STAGES.length - 1 ? '마무리 ›' : '다음 단계 ›';
+  },
+  renderCard(instant) {
+    const stage = currentStage();
+    const card = $('card');
+    const cur = S.current;
+    const used = S.used[stage.id] || [];
+    if (instant) card.style.transition = 'none';
+    if (cur.exhausted) {
+      const endedByLast = stage.deck.some((c, i) => c.pin === 'last' && used.includes(i));
+      $('questionText').textContent = endedByLast && stage.lastDoneTitle ? stage.lastDoneTitle : '이 단계 카드를 모두 뽑았어요';
+      $('questionSub').textContent = endedByLast && stage.lastDoneSub ? stage.lastDoneSub : '하던 얘기는 더 해도 돼요. 다 됐으면 다음 단계로 넘어가요.';
+      $('questionSub').hidden = false;
+      $('cardCount').textContent = endedByLast ? '' : `${stage.deck.length}장 모두 완료`;
+      card.classList.add('is-flipped');
+      $('drawBtn').textContent = S.stageIndex === STAGES.length - 1 ? '마무리 화면으로' : '다음 단계로 넘어가기';
+      $('swapBtn').hidden = true;
+    } else {
+      const c = stage.deck[cur.idx];
+      $('questionText').textContent = c.q;
+      $('questionSub').textContent = c.hint || '';
+      $('questionSub').hidden = !c.hint;
+      $('cardCount').textContent = `${used.length} / ${stage.deck.length}`;
+      card.classList.toggle('is-flipped', cur.revealed);
+      $('drawBtn').textContent = !cur.revealed ? '카드 뒤집기' : c.pin === 'last' ? '다 했어요' : '다음 카드 뽑기';
+      $('swapBtn').hidden = !cur.revealed || !!c.pin;   // 고정 카드는 바꾸지 않음
+    }
+    if (instant) { void card.offsetWidth; card.style.transition = ''; }
+  },
+  reveal() {
+    if (this.busy || !S.current || S.current.revealed || S.current.exhausted) return;
+    S.current.revealed = true;
+    save();
+    this.renderCard();
+  },
+  onDraw() {
+    if (this.busy) return;
+    const cur = S.current;
+    if (cur.exhausted) return this.nextStage();
+    if (!cur.revealed) return this.reveal();
+    // 뒤집어서 닫고 → 새 카드로 바꾼 뒤 → 뒷면 상태로 대기
+    this.busy = true;
+    $('card').classList.remove('is-flipped');
+    setTimeout(() => {
+      this.draw(currentStage(), false);
+      save();
+      this.renderCard();
+      this.busy = false;
+    }, 380);
+  },
+  swap() {
+    if (this.busy) return;
+    const cur = S.current;
+    if (!cur || !cur.revealed || cur.exhausted) return;
+    const stage = currentStage();
+    (S.swapped[stage.id] || (S.swapped[stage.id] = [])).push(cur.idx);
+    this.busy = true;
+    $('card').classList.remove('is-flipped');
+    setTimeout(() => {
+      this.draw(stage, true);   // 바꾼 카드는 바로 공개
+      save();
+      this.renderCard();
+      this.busy = false;
+    }, 380);
+  },
+  setStage(i) {
+    if (i < 0 || i >= STAGES.length) return;
+    S.stageIndex = i;
+    S.current = null;
+    save();
+    this.enter();
+  },
+  nextStage() {
+    if (S.stageIndex >= STAGES.length - 1) go('finish');
+    else this.setStage(S.stageIndex + 1);
+  },
+  restartTimer() {
+    const stage = currentStage();
+    const startedAt = Date.now();
+    S.timers[stage.id] = { startedAt, endsAt: startedAt + stage.minutes * 60000 };
+    delete S.timeUpSeen[stage.id];
+    save();
+    this.tick();
+  },
+  // 시간이 끝나도 자동으로 넘기지 않음. 배너 + 진동(1회)만
+  tick() {
+    const stage = currentStage();
+    const t = S.timers[stage.id];
+    if (!t) return;
+    const rem = t.endsAt - Date.now();
+    const el = $('stageTimer');
+    el.textContent = fmtTime(rem);
+    el.classList.toggle('is-low', rem > 0 && rem <= 60000);
+    el.classList.toggle('is-over', rem <= 0);
+    $('stageBanner').hidden = rem > 0;
+    const lastCall = rem > 0 && rem <= LAST_CALL_MIN * 60000;
+    if (lastCall) {
+      const lastIdx = stage.deck.findIndex(c => c.pin === 'last');
+      const lastPending = lastIdx >= 0 && !(S.used[stage.id] || []).includes(lastIdx);
+      $('lastCallBanner').textContent = lastPending
+        ? `⏳ ${LAST_CALL_MIN}분쯤 남았어요. 다음에 뽑는 카드가 마지막 카드예요.`
+        : `⏳ ${LAST_CALL_MIN}분쯤 남았어요. 지금 카드까지만 하고 넘어가요.`;
+    }
+    $('lastCallBanner').hidden = !lastCall;
+    if (rem <= 0 && !S.timeUpSeen[stage.id]) {
+      S.timeUpSeen[stage.id] = true;
+      save();
+      vibrate();
+    }
+    renderProgress($('cardsProgress'));
+  },
+};
+
+/* ---------- 마무리 ---------- */
+Screens.finish = {
+  init() {
+    $('finishBackBtn').addEventListener('click', () => {
+      S.stageIndex = STAGES.length - 1;
+      save();
+      go('cards');
+    });
+  },
+  enter() {
+    $('finishEyebrow').textContent = `오늘 우리 테이블 · ${S.table}번`;
+    const talkedOf = st => (S.used[st.id] || []).length - (S.swapped[st.id] || []).length;
+    const talked = STAGES.reduce((n, st) => n + talkedOf(st), 0);
+    $('statCards').textContent = `${talked}장`;
+    const mins = S.startedAt ? Math.max(1, Math.round((Date.now() - S.startedAt) / 60000)) : 0;
+    $('statTime').textContent = `${mins}분`;
+    $('stageSummary').innerHTML = STAGES.map(st =>
+      `<li><i style="background:${st.accent}"></i>${st.step}단계 · ${st.name}<span>${talkedOf(st)}장</span></li>`).join('');
+  },
+};
+
+/* ---------- 설정 시트 (초기화는 여기 안에) ---------- */
+const Settings = {
+  init() {
+    $('gearBtn').addEventListener('click', () => this.open());
+  },
+  open() {
+    const stage = currentStage();
+    const inCards = S.screen === 'cards';
+    const wrap = document.createElement('div');
+    wrap.className = 'sheet-backdrop';
+    wrap.innerHTML = `
+      <div class="sheet">
+        <h2>설정</h2>
+        <div class="meta">${S.table}번 테이블 · ${TABLES.seats(S.table)}명${inCards ? ` · ${stage.step}단계 ${stage.name}` : ''}</div>
+        ${inCards ? '<button class="btn btn-ghost" data-act="timer">이 단계 시간 다시 재기</button>' : ''}
+        <button class="btn btn-danger" data-act="reset">처음부터 다시 시작 (초기화)</button>
+        <button class="btn btn-ghost" data-act="close">닫기</button>
+      </div>`;
+    const close = () => wrap.remove();
+    wrap.addEventListener('click', e => {
+      if (e.target === wrap) return close();
+      const act = e.target.closest('[data-act]')?.dataset.act;
+      if (act === 'close') close();
+      if (act === 'timer') { Screens.cards.restartTimer(); close(); }
+      if (act === 'reset') {
+        if (confirm('진행 상황이 모두 지워져요.\n처음부터 다시 시작할까요?')) { close(); resetAll(); }
+      }
+    });
+    document.body.appendChild(wrap);
+  },
+};
+
+/* ============================================================
+   6. 앱 시작
+   ============================================================ */
+// QR 주소에 테이블 번호가 있으면(?t=3) 시작 화면에서 미리 선택해 둠.
+// 이미 진행 중인 테이블이 있으면 새로고침 대비로 저장된 진행 상태를 우선함.
+function tableFromUrl() {
+  try {
+    const n = parseInt(new URLSearchParams(location.search).get('t'), 10);
+    return n >= 1 && n <= TABLES.count ? n : null;
+  } catch (e) { return null; }
+}
+
+(function boot() {
+  if (!S.table) selectedTable = tableFromUrl();
+  Object.values(Screens).forEach(s => s.init && s.init());
+  Settings.init();
+  // 저장된 화면으로 복귀 (테이블 선택 전이면 시작 화면)
+  go(S.table ? S.screen : 'start');
+  setInterval(() => { const s = Screens[S.screen]; if (s && s.tick) s.tick(); }, 500);
+  if (S.table) WakeLock.request();
+})();
+
+// 다른 게임 웹앱(퀴즈·순위 게임)과 합칠 때 쓸 공개 API
+window.TalkCards = {
+  STAGES, RULES, TABLES,
+  Storage, getState: () => S, reset: resetAll,
+};
+</script>
+</body>
+</html>
