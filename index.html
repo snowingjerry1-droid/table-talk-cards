@@ -89,6 +89,7 @@ p{margin:0}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;padding:8px 12px;border-radius:999px;background:var(--surface);border:1.5px solid var(--line);font-size:14px;font-weight:700;white-space:nowrap}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chips.wrap{flex-wrap:wrap;overflow:visible;margin:0;padding:6px 0 10px}
 .chip small{font-weight:600;opacity:.6;margin-left:3px}
 .card-scene{perspective:1400px;flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0;min-height:330px}
 .card{position:relative;width:100%;max-width:420px;min-height:330px;height:min(56dvh,470px);transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,.1,.2,1);cursor:pointer;user-select:none}
@@ -264,7 +265,7 @@ const ROUND_RULES = { 1: '아는 사이끼리는 처음 보는 사람한테 먼�
 const rulesFor = r => ROUND_RULES[r] ? [...RULES, ROUND_RULES[r]] : RULES;
 
 // 카드 한 장에 테이블 전체가 쓰는 시간(분). 한 사람 20~30초 × 6~7명 기준, 밸런스·지목·한입 토크처럼 짧게 끝나는 건 더 짧게.
-const CAT_MIN = { warm: 2.5, taste: 2.5, life: 3, values: 3.5, balance: 1.5, point: 1, bite: 1.5, table: 2, love: 2.5 };
+const CAT_MIN = { warm: 2.5, taste: 2.5, life: 3, values: 3.5, balance: 1.5, point: 1, bite: 1.5, table: 2, love: 2.5, recommend: 2.5, tmi: 1.5 };
 const OPEN_MIN = 3, CLOSE_MIN = 3;   // 첫 카드(한 바퀴 소개), 마무리 카드
 // 라운드. plan = 랜덤으로 나올 카테고리별 장수. 테이블마다 10장에서 끝나기도, 20장 넘게 가기도 해서 라운드마다 20장으로 넉넉하게 잡아요.
 // 다 쓰고도 시간이 남으면 같은 비율로 계속 나와요. slow = 시간 계산용 배수(저녁 먹으면서는 1.2). 설정 → 「카드 배분」에서 바꿀 수 있어요.
@@ -282,7 +283,7 @@ const ROUNDS = {
        opener: { q: '이름 + 오늘 지금까지 제일 기억에 남는 순간', hint: '먹으면서 한 바퀴' },
        closer: { q: '오늘 세 테이블 돌면서 제일 기억에 남는 한마디', hint: '누가 한 말인지 이름도 같이요!' },
        endTitle: '단체 사진 찍을 시간이에요', endLead: '9:15부터는 자유 시간! 카드를 더 쓰고 싶으면 아래 버튼으로 계속해요.', next: '자유 시간 카드 계속하기' },
-  4: { name: '자유 시간', time: '9:15 –', minutes: 0, cats: ['balance', 'point', 'taste', 'life', 'values', 'bite', 'warm', 'love'],
+  4: { name: '자유 시간', time: '9:15 –', minutes: 0, cats: ['warm', 'balance', 'taste', 'recommend', 'tmi', 'bite', 'life', 'values', 'point', 'love'],
        opener: null, closer: null, endTitle: '오늘 정말 반가웠어요', endLead: '더 놀다 가도 돼요!', next: '처음 화면으로' },
 };
 
@@ -461,6 +462,34 @@ const CATS = {
     { q: '연인이랑 다투면 바로 푸는 편 vs 시간 갖는 편', hint: '이유도 한 줄' },
     '최애 사랑 노래 한 곡',
     '연애하면서 들었던 말 중에 제일 기억에 남는 말',
+  ] },
+  recommend: { name: '추천해 줘', emoji: '🎁', color: '#E8F0DD', accent: '#6E9460', mood: '서로 하나씩 추천! 마음에 들면 메모해 가요.', items: [
+    { r: [4], q: '요즘 제일 잘 산 물건 하나 추천' },
+    { r: [4], q: '혼자 가도 좋은 맛집 하나' },
+    { r: [4], q: '주말에 몰아 보기 좋은 영화나 드라마' },
+    { r: [4], q: '요즘 플레이리스트 1번 곡' },
+    { r: [4], q: '스트레스 풀리는 나만의 방법 추천' },
+    { r: [4], q: '서울에서 데이트하기 좋은 곳' },
+    { r: [4], q: '최근 본 영상 중에 강추하는 것' },
+    { r: [4], q: '잠 잘 오는 나만의 꿀팁' },
+    { r: [4], q: '겨울에 꼭 먹어야 하는 음식' },
+    { r: [4], q: '요즘 자주 쓰는 앱 하나' },
+    { r: [4], q: '받아서 좋았던 선물 하나' },
+    { r: [4], q: '당일치기로 가기 좋은 곳' },
+  ] },
+  tmi: { name: 'TMI', emoji: '🙊', color: '#F3E3F0', accent: '#A0589A', mood: '사소할수록 재밌어요. 쓸데없는 얘기 환영!', items: [
+    { r: [4], q: '아침에 눈뜨면 제일 먼저 하는 것' },
+    { r: [4], q: '샤워할 때 머리부터? 몸부터?' },
+    { r: [4], q: '라면 물은 계량해요, 눈대중이에요?' },
+    { r: [4], q: '치약은 중간부터 짜요, 끝부터 짜요?' },
+    { r: [4], q: '잘 때 꼭 있어야 하는 것' },
+    { r: [4], q: '최근에 혼자 피식 웃었던 이유' },
+    { r: [4], q: '휴대폰 배터리 몇 %부터 불안해요?' },
+    { r: [4], q: '알람은 몇 개 맞춰요?' },
+    { r: [4], q: '나만 아는 사소한 습관 하나' },
+    { r: [4], q: '지금 가진 물건 중 제일 오래 쓴 것' },
+    { r: [4], q: '하루 중 제일 좋아하는 시간' },
+    { r: [4], q: '양말은 꼭 짝 맞춰 신어요?' },
   ] },
   table: { name: '우리 테이블', emoji: '🪑', color: '#FDE8D7', accent: '#C9733C', mood: 'MIXER SEOUL에 적은 걸로 만든 카드예요.', type: 'table', items: [] },
 };
@@ -777,14 +806,17 @@ Screens.cards = {
     this.renderChips(); this.renderCard(true); this.tick();
   },
   renderChips() {
-    S.filter = null;
-    $('catChips').innerHTML = `<span class="chip on" style="pointer-events:none">💬 대화 카드</span>`;
-    return;
+    // 1~3라운드: 카테고리 없이 「대화 카드」 하나로. 자유 시간: 질문 유형을 골라서 뽑아요
+    if (S.round !== 4) {
+      S.filter = null; $('catChips').classList.remove('wrap');
+      $('catChips').innerHTML = `<span class="chip on" style="pointer-events:none">💬 대화 카드</span>`;
+      return;
+    }
+    $('catChips').classList.add('wrap');
     const cats = R().cats.filter(c => c !== 'table' || people().length >= 2);
-    $('catChips').innerHTML = `<button class="chip ${!S.filter ? 'on' : ''}" data-c="">🎲 랜덤</button>` + cats.map(c => {
-      const n = poolOf(c).length, plan = planOf(S.round);
-      const tag = plan && !CATS[c].manual ? `${catN(c)}/${plan[c] || 0}` : n;
-      return `<button class="chip ${S.filter === c ? 'on' : ''}" data-c="${c}" ${n ? '' : 'disabled style="opacity:.35"'}>${CATS[c].emoji} ${CATS[c].name}<small>${tag}</small></button>`;
+    $('catChips').innerHTML = `<button class="chip ${!S.filter ? 'on' : ''}" data-c="">🎲 섞어서</button>` + cats.map(c => {
+      const n = poolOf(c).length;
+      return `<button class="chip ${S.filter === c ? 'on' : ''}" data-c="${c}" ${n ? '' : 'disabled style="opacity:.35"'}>${CATS[c].emoji} ${CATS[c].name}<small>${n}</small></button>`;
     }).join('');
     $('catChips').querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
       S.filter = b.dataset.c || null; save();
@@ -797,13 +829,14 @@ Screens.cards = {
     const special = { open: ['#FFF4D6', '#CFA23A', '👋', '첫 카드', '이번 테이블 첫 바퀴'], close: ['#E6EBD9', '#7D9A6E', '🌙', '마무리 카드', '이 테이블 마지막 카드예요'], none: ['#E6EBD9', '#7D9A6E', '💬', '카드 끝', '이번 라운드 카드를 다 썼어요'] }[card.cat];
     document.documentElement.style.setProperty('--cat-card', special ? special[0] : c.color);
     document.documentElement.style.setProperty('--cat-accent', special ? special[1] : c.accent);
-    $('backMark').textContent = special ? special[2] : '💬';
-    $('backCat').textContent = special ? special[3] : '대화 카드';
-    $('backMood').textContent = special ? special[4] : '';
+    const free = S.round === 4 && CATS[card.cat];
+    $('backMark').textContent = special ? special[2] : free ? CATS[card.cat].emoji : '💬';
+    $('backCat').textContent = special ? special[3] : free ? CATS[card.cat].name : '대화 카드';
+    $('backMood').textContent = special ? special[4] : free ? CATS[card.cat].mood : '';
   },
   renderFront() {
     const c = S.current;
-    const label = { open: '👋 첫 카드', close: '🌙 마무리 카드', none: '💬 카드 끝' }[c.cat] || '💬 대화 카드';
+    const label = { open: '👋 첫 카드', close: '🌙 마무리 카드', none: '💬 카드 끝' }[c.cat] || (S.round === 4 && CATS[c.cat] ? `${CATS[c.cat].emoji} ${CATS[c.cat].name}` : '💬 대화 카드');
     let body = '';
     if (c.type === 'none') body = `<div class="q sm">이번 라운드 카드를 다 썼어요</div><div class="sub">이제 카드 없이 자유롭게 얘기해요.<br>다른 라운드 카드는 남아 있어요.</div>`;
     else if (c.type === 'balance') body = `<div class="sub" style="margin:0 0 8px;font-size:17px;color:var(--ink)">${esc(c.q)}</div>
