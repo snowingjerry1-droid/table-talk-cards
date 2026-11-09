@@ -74,8 +74,8 @@ p{margin:0}
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-right:48px}
 .topbar-title{font-size:20px;font-weight:800;line-height:1.2}
 .timer{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;padding:6px 0;white-space:nowrap}
-.timer.is-low{color:var(--coral-deep)}
-.timer.is-over{color:var(--coral-deep);animation:blink 1.2s ease-in-out infinite}
+.timer.is-low{color:var(--coral)}
+.timer.is-over{color:var(--muted);font-size:20px}
 @keyframes blink{50%{opacity:.35}}
 .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:10px 0 6px}
 .bar i{display:block;height:100%;width:0;background:var(--coral);transition:width .5s linear}
@@ -98,12 +98,12 @@ p{margin:0}
 .back-mark{width:92px;height:92px;border-radius:50%;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:14px;box-shadow:0 6px 16px rgba(0,0,0,.06)}
 .back-cat{font-size:24px;font-weight:900;color:var(--ink);margin-bottom:6px}
 .back-mood{font-size:16px;font-weight:600;line-height:1.45;max-width:270px;opacity:.75}
-.back-tap{margin-top:16px;font-size:14px;font-weight:700;opacity:.5}
+.back-tap{margin-top:16px;font-size:15px;font-weight:600;line-height:1.45;opacity:.65}
 .front{transform:rotateY(180deg);background:var(--cat-card);justify-content:center}
 .front-cat{position:absolute;top:18px;left:0;right:0;font-size:13px;font-weight:800;color:var(--cat-accent);letter-spacing:.03em}
 .front-count{position:absolute;bottom:14px;left:0;right:0;font-size:12px;color:var(--muted)}
-.q{font-size:clamp(25px,6.6vw,34px);font-weight:800;line-height:1.35}
-.q.sm{font-size:clamp(22px,5.6vw,28px)}
+.q{font-size:clamp(27px,7.2vw,36px);font-weight:800;line-height:1.35}
+.q.sm{font-size:clamp(24px,6.2vw,30px)}
 .sub{margin-top:10px;font-size:15px;color:var(--muted);font-weight:600;line-height:1.45}
 .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;width:100%;margin-top:6px}
 .vs .opt{background:rgba(255,255,255,.7);border-radius:18px;padding:18px 8px;font-size:clamp(19px,5vw,24px);font-weight:800;line-height:1.3;min-height:110px;display:flex;align-items:center;justify-content:center}
@@ -149,7 +149,7 @@ p{margin:0}
 <!-- 1. 시작 -->
 <section class="screen" data-screen="start">
   <div class="eyebrow">MIXER SEOUL · 테이블 대화 카드</div>
-  <h1>지금 몇 번 테이블,<br>몇 번째 자리예요?</h1>
+  <h1>지금 몇 번 테이블,<br>몇 라운드예요?</h1>
   <p class="lead">폰 한 대를 테이블 가운데 두고 다 같이 봐요.</p>
   <div class="label">테이블</div>
   <div class="grid t" id="tableGrid"></div>
@@ -183,7 +183,7 @@ p{margin:0}
   </header>
   <div class="bar" id="roundBar"><i></i></div>
   <div class="banner" id="timeBanner" hidden></div>
-  <div class="banner banner-soft" id="nudgeBanner" hidden><span class="grow">대화가 잘 굴러가면 카드 없이 이어가도 돼요.</span><button id="nudgeGo">자유 대화</button><button id="nudgeX">✕</button></div>
+  <div class="banner banner-soft" id="nudgeBanner" hidden><span class="grow">얘기가 잘 이어지고 있으면, 카드 없이 계속해도 돼요.</span><button id="nudgeGo">자유 대화</button><button id="nudgeX">✕</button></div>
   <div class="chips" id="catChips"></div>
 
   <div class="card-scene">
@@ -192,7 +192,7 @@ p{margin:0}
         <div class="back-mark" id="backMark">?</div>
         <div class="back-cat" id="backCat"></div>
         <div class="back-mood" id="backMood"></div>
-        <div class="back-tap">탭해서 뒤집기</div>
+        <div class="back-tap">이번 카드는 <b>지난번 읽은 사람의 왼쪽</b>이<br>뒤집고 소리 내서 읽어 주세요</div>
       </div>
       <div class="face front" id="front"></div>
     </div>
@@ -218,7 +218,7 @@ p{margin:0}
   </header>
   <div class="free-wrap">
     <div class="free-ic">💬</div>
-    <p class="lead">카드는 잠깐 쉬어요. 하고 싶은 얘기 마음껏!</p>
+    <p class="lead">카드는 잠깐 쉬어요. 여럿으로 갈라지면 한 명도 혼자 남지 않게!</p>
     <div class="free-time" id="freeTime">00:00</div>
     <div class="free-prompt" id="freePrompt"><small>얘기가 멈추면 이렇게 물어봐요</small><b id="freePromptText"></b></div>
     <button class="btn-text" id="freeNextPrompt">다른 질문 보기 ↻</button>
@@ -260,6 +260,10 @@ const RULES = [
   '테이블 모두 별로면 "카드 바꾸기".',
 ];
 
+// 라운드별로 덧붙는 규칙
+const ROUND_RULES = { 1: '아는 사이끼리는 처음 보는 사람한테 먼저 질문을 넘겨요.' };
+const rulesFor = r => ROUND_RULES[r] ? [...RULES, ROUND_RULES[r]] : RULES;
+
 // 라운드. 카테고리가 여러 라운드에 걸치면 질문을 라운드별로 나눠 써서, 자리를 옮겨도 같은 질문이 다시 나오지 않아요.
 const ROUNDS = {
   1: { name: '첫 만남', time: '7:20 – 7:50', minutes: 30, cats: ['warm', 'balance', 'taste', 'whatif', 'point', 'mission'],
@@ -270,7 +274,7 @@ const ROUNDS = {
        opener: { q: '이름 + 요즘 빠진 것 하나', hint: '앞 테이블이랑 다른 소개로 가요' },
        closer: { q: '오늘 이 테이블에서 "어, 나도!" 했던 순간', hint: '이 카드가 끝나면 저녁 테이블로!' },
        endTitle: '저녁 먹으러 갈 시간이에요', endLead: '8:35부터 새 테이블에서 저녁과 함께 3라운드를 해요.', next: '3라운드 준비하기' },
-  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, cats: ['bite', 'life', 'memory', 'values', 'table', 'mission'],
+  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, cats: ['bite', 'life', 'memory', 'values', 'table', 'mission'], lateCats: ['life', 'values'], lateAfter: 15,
        opener: { q: '이름 + 오늘 지금까지 제일 기억에 남는 순간', hint: '먹으면서 한 바퀴' },
        closer: { q: '오늘 세 테이블 돌면서 제일 기억에 남는 한마디', hint: '누가 한 말인지 이름도 같이요!' },
        endTitle: '단체 사진 찍을 시간이에요', endLead: '9:15부터는 자유 시간! 카드를 더 쓰고 싶으면 아래 버튼으로 계속해요.', next: '자유 시간 카드 계속하기' },
@@ -365,25 +369,23 @@ const CATS = {
     '내일 아침 다른 나라에서 눈을 뜬다면 어디였으면?',
     '평생 한 가지 음식만 먹어야 한다면?',
   ] },
-  point: { name: '지목', emoji: '👉', color: '#FCE1E4', accent: '#D0606F', mood: '하나 둘 셋 하면 동시에 가리켜요!', type: 'point', items: [
+  point: { name: '지목', emoji: '👉', color: '#FCE1E4', accent: '#D0606F', mood: '가리키거나 손 들기. 다 칭찬이에요!', type: 'point', items: [
     '여행 가면 계획표를 짜 올 것 같은 사람',
-    '노래방에서 제일 먼저 마이크 잡을 것 같은 사람',
-    '휴대폰 사진첩 사진이 제일 많을 것 같은 사람',
-    '오늘 제일 늦게까지 놀 것 같은 사람',
+    { hand: true, q: '맛집 저장 목록이 50개 넘는 사람' },
     '요리를 제일 잘할 것 같은 사람',
-    '알람을 다섯 번은 끄고 일어날 것 같은 사람',
+    { hand: true, q: '혼자 여행 가 본 사람' },
     '무인도에서 제일 오래 살아남을 것 같은 사람',
-    '단톡방 답장이 제일 빠를 것 같은 사람',
-    '갑자기 혼자 여행 떠날 것 같은 사람',
-    '맛집 리스트가 제일 길 것 같은 사람',
-    '매운 거 제일 잘 먹을 것 같은 사람',
+    { hand: true, q: '올해 공연이나 페스티벌 가 본 사람' },
     '친구 생일을 제일 잘 챙길 것 같은 사람',
-    '영화 보다가 제일 먼저 울 것 같은 사람',
+    { hand: true, q: '오늘 나오기 전에 옷 두 번 이상 갈아입은 사람' },
     '방이 제일 깔끔할 것 같은 사람',
-    '장바구니에 담아만 두고 안 살 것 같은 사람',
-    '놀이공원에서 제일 무서운 거 먼저 탈 것 같은 사람',
+    { hand: true, q: '아침형 인간' },
     '길을 제일 잘 찾을 것 같은 사람',
-    '오늘 사진을 제일 많이 찍을 것 같은 사람',
+    { hand: true, q: '사진첩 절반이 음식 사진인 사람' },
+    '사진을 제일 잘 찍어 줄 것 같은 사람',
+    { hand: true, q: '요리 하나는 자신 있는 사람' },
+    '고민 상담을 제일 잘해 줄 것 같은 사람',
+    { hand: true, q: '노래방 가면 마이크 안 놓는 사람' },
   ] },
   memory: { name: '추억 소환', emoji: '📼', color: '#E7EFE0', accent: '#6E9460', mood: '그때 그 시절 얘기. 생각 안 나면 패스!', items: [
     '어릴 때 제일 좋아했던 만화',
@@ -454,19 +456,16 @@ const CATS = {
   mission: { name: '테이블 미션', emoji: '🎯', color: '#DDF1EE', accent: '#3E9C8F', mood: '다 같이 하는 미니 게임!', type: 'mission', items: [
     { r: [1], title: '공통점 찾기', desc: '2분 안에 테이블 전원이 해당하는 공통점 3개 찾기! "사람이다"는 빼고요.', timer: 120 },
     { r: [1], title: '동시에 외치기', desc: '하나 둘 셋 하면 다 같이 동시에 말해요. 같은 답 나온 사람끼리 하이파이브!', topics: ['치킨 브랜드', '여름 하면 떠오르는 것', '편의점 음료', '서울 데이트 장소', '아이돌 그룹', '라면 이름', '한강 하면 떠오르는 것', '노래방 애창곡 가수'] },
+    { r: [1], title: '숫자로 말해요', desc: '하나 둘 셋 하면 손가락으로 동시에! 「오늘 내 텐션 1~5」. 같은 숫자끼리 하이파이브!' },
     { r: [1], title: '이모지 자기소개', desc: '각자 폰에 이모지 3개로 나를 표현해서 보여 줘요. 나머지가 뜻을 맞혀요.' },
-    { r: [1], title: '최근 검색어 공개', desc: '인터넷이나 유튜브 최근 검색어 중 말할 수 있는 거 하나씩. 사연 있으면 이어서!' },
-    { r: [1, 4], title: '오늘의 주인공', desc: '룰렛에 걸린 사람한테 나머지가 돌아가며 질문 하나씩. 답 듣고 더 궁금하면 계속 물어봐요.', roulette: true, free: true },
     { r: [2], title: '두 개의 진실, 하나의 거짓', desc: '룰렛에 걸린 사람이 자기 얘기 3개를 말해요. 하나는 거짓말! 나머지가 맞혀요.', roulette: true },
-    { r: [2], title: '사진 한 장', desc: '사진첩에서 최근 한 달 안에 찍은 사진 하나씩 보여 주고 사연 30초.' },
-    { r: [2], title: '1분 토크', desc: '룰렛에 걸린 사람이 1분 동안 "요즘 제일 빠진 것" 얘기. 끝나면 질문 2개 받기!', roulette: true, timer: 60, free: true },
+    { r: [2], title: '사진 한 장', desc: 'SNS에 이미 올린 사진 중에 하나씩 보여 주고 사연 30초. 사진첩은 안 열어도 돼요.' },
     { r: [2], title: '첫인상 한 단어', desc: '룰렛에 걸린 사람의 첫인상을 다 같이 한 단어씩. 주인공이 제일 맞는 걸 골라요.', roulette: true },
     { r: [2, 4], title: '숫자 맞히기', desc: '각자 사진첩 사진이 몇 장일지 예상해서 말하고 한 명씩 확인! 제일 가깝게 맞힌 사람이 승.' },
     { r: [3], title: '추천 릴레이', desc: '한 명씩 "요즘 이거 좋더라" 하나씩. 앞 사람 추천이랑 이어지면 박수!' },
     { r: [3], title: '오늘 저녁 평점', desc: '다 같이 오늘 저녁 메뉴를 10점 만점으로 평가하고 한 줄 평!' },
-    { r: [3], title: '가방 속 물건', desc: '가방이나 주머니에서 물건 하나씩 꺼내 사연 소개. 제일 의외인 물건 투표!' },
+    { r: [4], title: '가방 속 물건', desc: '가방이나 주머니에서 물건 하나씩 꺼내 사연 소개. 제일 의외인 물건 투표!' },
     { r: [3], title: '우리 테이블 키워드', desc: '1분 안에 우리 테이블을 대표하는 키워드 하나 정하기. 정해지면 다 같이 사진 한 장!', timer: 60 },
-    { r: [3, 4], title: '몸으로 말해요', desc: '룰렛에 걸린 사람이 "요즘 빠진 것"을 말 없이 몸으로 설명. 1분 안에 맞히기!', roulette: true, timer: 60 },
   ] },
   table: { name: '우리 테이블', emoji: '🪑', color: '#FDE8D7', accent: '#C9733C', mood: 'MIXER SEOUL에 적은 걸로 만든 카드예요.', type: 'table', items: [] },
 };
@@ -480,7 +479,7 @@ const TAILS = [
 ];
 // 자유 대화에서 얘기가 멈췄을 때 띄우는 질문
 const FREE_PROMPTS = [
-  '방금 나온 얘기 중에 제일 궁금했던 사람한테 하나 더 물어보기', '여기서 아직 얘기 덜 한 사람한테 "○○님은요?"',
+  '아직 얘기 덜 한 사람한테 "○○님은요?" 하고 넘겨 주기', '방금 나온 얘기 중에 제일 궁금했던 사람한테 하나 더 물어보기',
   '아까 답 중에 나랑 겹친 거 있었어요? 그 얘기 더!', '요즘 이 근처에서 가 본 데 중에 좋았던 곳?',
   '오늘 끝나고 뭐 해요?', '이번 주말 계획 있어요?', '최근에 본 것 중에 남한테 꼭 추천하고 싶은 거?',
   '아까 그 얘기, 결국 어떻게 됐어요?', '여기 사람들이랑 같이 가면 좋을 맛집 하나씩', '오늘 처음 들어 본 단어나 얘기 있었어요?',
@@ -588,6 +587,14 @@ function poolOf(catId) {
 function makeCard(catId, it) { return { cat: catId, type: CATS[catId].type || 'q', ...it }; }
 
 // 우리 테이블 카드: 명단에서 그때그때 만들기. 한 사람의 같은 정보는 한 번만.
+// 너무 짧거나 의미 없는 답은 카드로 안 만듦
+function meaningful(s, name) {
+  s = String(s || '').trim();
+  if (s.length < 3 || !/[가-힣A-Za-z]{2,}/.test(s)) return false;
+  if (/^[ㄱ-ㅎㅏ-ㅣ\s?!.~]+$/.test(s) || /(ㅋ|ㅎ){2,}/.test(s)) return false;
+  if (ALL.some(p => { const n = String(p.name || '').replace(/[①-⑳]/g, ''); return n.length >= 2 && s.includes(n); })) return false;
+  return !/^(없음|없어요|없다|몰라|모름|아무거나|아무 얘기나|정말 아무 얘기나|비밀|테스트|test)$/i.test(s.replace(/[?!.~\s]+$/, ''));
+}
 function tableCards() {
   const ps = people();
   if (ps.length < 2) return [];
@@ -598,15 +605,14 @@ function tableCards() {
     if (ans.length < 3) return;
     const A = ans.filter(p => p.quick.includes(qq.a[0])), B = ans.filter(p => p.quick.includes(qq.a[1]));
     const minor = A.length <= B.length ? qq.a[0] : qq.a[1];
-    add(`t:quick:${i}`, { title: `${qq.q}, 우리 테이블은?`, q: `이 테이블에 ${josa(minor, '은', '는')} 몇 명일까요?`, hint: '다 같이 숫자를 외친 다음 공개!',
+    add(`t:quick:${i}`, { title: `${qq.q}, 우리 테이블은?`, q: `「${minor}」 고른 사람, 이 테이블에 몇 명일까요?`, hint: '다 같이 숫자를 외친 다음 공개!',
       reveal: `<div><span class="big">${esc(qq.a[0])} ${A.length}</span> · <span class="big">${esc(qq.a[1])} ${B.length}</span></div><div style="margin-top:6px">${esc(qq.a[0])}: ${esc(A.map(p => p.name).join(', ') || '없음')}<br>${esc(qq.a[1])}: ${esc(B.map(p => p.name).join(', ') || '없음')}</div><div style="margin-top:6px;color:var(--muted)">${A.length && B.length ? '소수파부터 변론 한마디!' : '만장일치! 이유를 한 명씩'}</div>` });
   });
-  ps.filter(p => p.song.length >= 2).forEach(p => add(`t:song:${p.id}`, { title: '이 노래 누구 거?', q: `“${p.song}”`, hint: '오늘 듣고 싶은 최애곡으로 적은 노래예요. 누가 골랐을까요?',
+  ps.filter(p => meaningful(p.song, p.name)).forEach(p => add(`t:song:${p.id}`, { title: '이 노래 누구 거?', q: `“${p.song}”`, hint: '오늘 듣고 싶은 최애곡으로 적은 노래예요. 누가 골랐을까요?',
     reveal: `<span class="big">${esc(p.name)}</span><div style="margin-top:4px">이 노래 고른 이유, 언제 처음 들었는지 들려주세요!</div>` }));
-  ps.filter(p => p.intro.length >= 2).forEach(p => add(`t:intro:${p.id}`, { title: '이 얘기 나오면 말 많아지는 사람', q: `“${p.intro}”`, hint: '누구일까요? 맞히고 나서 주인공한테 질문 하나씩!',
-    reveal: `<span class="big">${esc(p.name)}</span><div style="margin-top:4px">1분 동안 이 얘기 들려주세요. 끝나면 돌아가며 질문!</div>`, free: true }));
-  ps.filter(p => p.know.length >= 2).forEach(p => add(`t:know:${p.id}`, { title: '물어봐도 된대요', q: `${p.name} 님은 “${p.know}” 물어봐도 된대요`, hint: '한 명씩 궁금한 거 하나씩 물어봐요', free: true }));
-  ps.filter(p => p.curious.length >= 2).forEach(p => add(`t:cur:${p.id}`, { title: '요즘 이게 궁금하대요', q: `${p.name} 님이 요즘 “${p.curious}”${jo(p.curious, '이', '가')} 궁금하대요`, hint: '아는 거, 들은 거, 해 본 거 하나씩 보태 주세요', free: true }));
+  ps.filter(p => meaningful(p.intro, p.name)).forEach(p => add(`t:intro:${p.id}`, { title: '이 얘기 나오면 말 많아지는 사람이 있대요', q: `“${p.intro}”`, hint: '주인공은 편할 때 손 들어 주세요. 안 들어도 괜찮아요. 다 같이 이 얘기 아는 거 하나씩!', free: true }));
+  ps.filter(p => meaningful(p.know, p.name)).forEach(p => add(`t:know:${p.id}`, { title: '물어봐도 된대요', q: `${p.name} 님은 “${p.know}” 물어봐도 된대요`, hint: '한 명씩 궁금한 거 하나씩 물어봐요', free: true }));
+  ps.filter(p => meaningful(p.curious, p.name)).forEach(p => add(`t:cur:${p.id}`, { title: '이게 궁금한 사람이 있대요', q: `“${p.curious}”`, hint: '아는 거, 들은 거, 해 본 거 하나씩 보태 주세요. 궁금한 사람은 손 안 들어도 돼요', free: true }));
   const cnt = {};
   ps.forEach(p => p.free.forEach(k => { (cnt[k] = cnt[k] || []).push(p.name); }));
   Object.entries(cnt).filter(([, n]) => n.length >= 2).forEach(([k, n]) => add(`t:kw:${k}`, { title: '같은 키워드 고른 사람', q: `#${k}`, hint: `${n.join(', ')} 님이 똑같이 골랐어요. 서로 질문 하나씩!`, free: true }));
@@ -626,13 +632,16 @@ function nextCard() {
     const special = avail.filter(c => c === 'mission' || c === 'table');
     if (n % 4 === 3 && special.length) cat = pick(special);          // 네 장마다 미션이나 우리 테이블 카드
     else {
-      const normal = avail.filter(c => c !== 'mission' && c !== 'table' && c !== S.lastCat);
+      const pointCap = (S.pointN && S.pointN[S.round] || 0) >= 2;
+      const late = r.lateCats && r.lateAfter && (!S.timers[S.round] || Date.now() - S.timers[S.round].startedAt < r.lateAfter * 60000);
+      const normal = avail.filter(c => c !== 'mission' && c !== 'table' && c !== S.lastCat && !(c === 'point' && pointCap) && !(late && r.lateCats.includes(c)));
       cat = pick(normal.length ? normal : avail);
     }
   }
   const it = pick(poolOf(cat));
   S.drawn[S.round] = (S.drawn[S.round] || 0) + 1;
   S.lastCat = cat;
+  if (cat === 'point') { S.pointN = S.pointN || {}; S.pointN[S.round] = (S.pointN[S.round] || 0) + 1; }
   const card = makeCard(cat, it);
   if (card.topics) card.topic = pick(card.topics);
   return card;
@@ -670,7 +679,7 @@ Screens.start = {
   },
   render() {
     $('tableGrid').innerHTML = Array.from({ length: TABLES.count }, (_, i) => i + 1).map(n =>
-      `<button class="pick ${selTable === n ? 'on' : ''}" data-t="${n}"><b>${n}번</b><span>${TABLES.label(n)} · ${TABLES.seats(n)}명</span></button>`).join('');
+      `<button class="pick ${selTable === n ? 'on' : ''}" data-t="${n}"><b>${n}번</b><span>${TABLES.label(n)}</span></button>`).join('');
     $('roundGrid').innerHTML = [1, 2, 3, 4].map(n =>
       `<button class="pick ${selRound === n ? 'on' : ''}" data-r="${n}"><b>${n < 4 ? n + '라운드' : '자유 시간'}</b><span>${ROUNDS[n].time} · ${ROUNDS[n].name}</span></button>`).join('');
     $('tableGrid').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { selTable = +b.dataset.t; this.render(); });
@@ -683,12 +692,12 @@ Screens.start = {
 Screens.rules = {
   adding: false, q: '',
   init() {
-    $('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
     $('rulesOkBtn').addEventListener('click', () => go(S.free ? 'free' : 'cards'));
   },
   enter() {
     $('rulesEyebrow').textContent = `${S.table}번 테이블 · ${S.round < 4 ? S.round + '라운드' : '자유 시간'} ${R().name}${R().minutes ? ` · ${R().minutes}분` : ''}`;
     this.adding = false; this.q = '';
+    $('rulesList').innerHTML = rulesFor(S.round).map(r => `<li>${r}</li>`).join('');
     this.renderPeople();
     loadPeople();
   },
@@ -735,7 +744,6 @@ Screens.rules = {
 Screens.cards = {
   busy: false,
   init() {
-    $('rulesMini').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
     $('rulesToggle').onclick = () => { const l = $('rulesMini'); l.hidden = !l.hidden; $('rulesToggle').textContent = l.hidden ? '대화 규칙 보기 ▾' : '대화 규칙 접기 ▴'; };
     $('card').addEventListener('click', e => { if (e.target.closest('button')) return; this.flip(); });
     $('drawBtn').onclick = () => this.onPrimary();
@@ -751,6 +759,7 @@ Screens.cards = {
     save();
     $('roundStep').textContent = `${S.table}번 테이블 · ${S.round < 4 ? S.round + '라운드' : '자유 시간'}`;
     $('roundName').textContent = R().name;
+    $('rulesMini').innerHTML = rulesFor(S.round).map(r => `<li>${r}</li>`).join('');
     this.renderChips(); this.renderCard(true); this.tick();
   },
   renderChips() {
@@ -782,7 +791,8 @@ Screens.cards = {
     else if (c.type === 'balance') body = `<div class="sub" style="margin:0 0 8px;font-size:17px;color:var(--ink)">${esc(c.q)}</div>
       <div class="vs"><div class="opt"><div><small>👈 왼쪽</small>${esc(c.a)}</div></div><b>VS</b><div class="opt"><div><small>오른쪽 👉</small>${esc(c.b)}</div></div></div>
       <div class="sub">하나 둘 셋 하면 동시에 손가락으로!<br>소수파부터 이유 한마디</div>`;
-    else if (c.type === 'point') body = `<div class="sub" style="margin:0 0 8px">이 테이블에서</div><div class="q">${esc(c.q)}</div><div class="sub">하나 둘 셋 하면 동시에 가리켜요!<br>제일 많이 지목된 사람은 진짜인지 고백하기</div>`;
+    else if (c.type === 'point' && c.hand) body = `<div class="sub" style="margin:0 0 8px">나다 싶으면 손 들기 ✋</div><div class="q">${esc(c.q)}</div><div class="sub">하나 둘 셋 하면 동시에 손 들어요!<br>손 든 사람끼리 한마디씩</div>`;
+    else if (c.type === 'point') body = `<div class="sub" style="margin:0 0 8px">이 테이블에서</div><div class="q">${esc(c.q)}</div><div class="sub">하나 둘 셋 하면 동시에 가리켜요!<br>지목된 사람은 맞는지 한마디 (아니어도 괜찮아요)</div>`;
     else if (c.type === 'mission') body = `<div class="q">${esc(c.title)}</div><div class="sub" style="font-size:16px;color:var(--ink)">${esc(c.desc)}</div>
       ${c.topic ? `<div class="reveal"><span class="note">주제</span><div class="big">${esc(c.topic)}</div></div>` : ''}
       <div class="tool">${c.roulette ? `<button data-act="roulette">🎯 룰렛 돌리기</button>` : ''}${c.timer ? `<button data-act="timer">⏱ ${c.timer >= 60 ? c.timer / 60 + '분' : c.timer + '초'} 시작</button>` : ''}${c.topics ? `<button data-act="topic">🔀 다른 주제</button>` : ''}<span id="toolOut"></span></div>`;
@@ -871,7 +881,7 @@ Screens.cards = {
     else {
       $('roundBar').hidden = false;
       const rem = t.endsAt - Date.now();
-      el.textContent = rem > 0 ? fmt(rem) : '+' + fmt(-rem);
+      el.textContent = rem > 0 ? fmt(rem) : '시간 됐어요';
       el.classList.toggle('is-low', rem > 0 && rem <= 3 * 60000);
       el.classList.toggle('is-over', rem <= 0);
       $('roundBar').firstChild.style.width = Math.min(100, (Date.now() - t.startedAt) / (r.minutes * 600)) + '%';
@@ -886,12 +896,12 @@ Screens.cards = {
       } else banner.hidden = true;
     }
     // 카드 5장마다 "카드 없이 얘기해도 돼요" 안내
-    $('nudgeBanner').hidden = !(S.revealed >= 5 && S.revealed - S.nudgeAt >= 5 && S.screen === 'cards' && banner.hidden);
+    $('nudgeBanner').hidden = !(S.revealed >= 10 && S.revealed - S.nudgeAt >= 10 && S.screen === 'cards' && banner.hidden);
   },
 };
 
 /* ---------- 자유 대화 ---------- */
-function startFree() { S.free = { startedAt: Date.now() }; S.freePrompt = Math.floor(Math.random() * FREE_PROMPTS.length); save(); go('free'); }
+function startFree() { S.free = { startedAt: Date.now() }; S.freePrompt = 0; save(); go('free'); }
 Screens.free = {
   init() {
     $('freeNextPrompt').onclick = () => { S.freePrompt = (S.freePrompt + 1) % FREE_PROMPTS.length; save(); this.render(); };
