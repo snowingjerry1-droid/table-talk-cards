@@ -38,7 +38,7 @@ p{margin:0}
 .btn-sage{background:var(--sage);color:#fff}
 .btn-text{min-height:40px;font-size:15px;font-weight:600;color:var(--muted);padding:8px 12px;border-radius:12px}
 .btn-text:active{background:rgba(0,0,0,.04)}
-.mini-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.mini-row{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}
 .mini{min-height:48px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);font-size:14px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;padding:6px}
 .mini span{font-size:18px}
 .mini:active{background:var(--coral-soft)}
@@ -111,7 +111,8 @@ p{margin:0}
 .vs b{font-size:16px;font-weight:900;color:var(--cat-accent)}
 .tool{margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .tool button{padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.8);font-size:15px;font-weight:800}
-.tool .out{font-size:20px;font-weight:900;padding:8px 14px;border-radius:14px;background:#fff;color:var(--coral-deep);animation:popIn .3s ease}
+.tool #toolOut{flex-basis:100%;display:flex;justify-content:center;min-height:0}
+.tool .out{font-size:15px;white-space:nowrap;font-weight:900;padding:7px 12px;border-radius:14px;background:#fff;color:var(--coral-deep);animation:popIn .3s ease}
 .reveal{margin-top:12px;background:rgba(255,255,255,.8);border-radius:16px;padding:12px 14px;font-size:16px;font-weight:700;line-height:1.5;animation:popIn .3s ease;width:100%}
 .reveal .big{font-size:24px;font-weight:900;color:var(--coral-deep)}
 .tail{margin-top:8px;background:#fff;border:1.5px dashed var(--line);border-radius:14px;padding:10px 12px;font-size:15px;font-weight:700;animation:popIn .3s ease;text-align:center}
@@ -206,8 +207,6 @@ p{margin:0}
   <button class="btn btn-primary" id="drawBtn">다음 카드</button>
   <div class="mini-row" id="miniRow">
     <button class="mini" id="swapBtn"><span>🔄</span>카드 바꾸기</button>
-    <button class="mini" id="tailBtn"><span>🪝</span>꼬리 질문</button>
-    <button class="mini" id="freeBtn"><span>💬</span>이 얘기 더 하기</button>
   </div>
   <footer class="rules-mini">
     <button class="btn-text" id="rulesToggle">대화 규칙 보기 ▾</button>
@@ -262,7 +261,7 @@ const RULES = [
   '카드를 읽은 사람의 왼쪽부터 돌아가며 답해요.',
   '한 단어로 답해도 충분해요. 어려우면 "패스".',
   '더 궁금하면 계속 물어봐요. 얘기가 길어지면 카드는 잠깐 쉬어도 돼요.',
-  '나이, 직업은 안 물어봐요. 연애 얘기는 다들 원할 때 「💘 연애」 칩으로.',
+  '나이, 직업은 안 물어봐요.',
   '테이블 모두 별로면 "카드 바꾸기".',
 ];
 
@@ -277,15 +276,15 @@ const OPEN_MIN = 3, CLOSE_MIN = 3;   // 첫 카드(한 바퀴 소개), 마무리
 // 라운드 시간에서 첫·마무리 카드를 빼고, 남은 시간이 꽉 차도록 mix 비율대로 장수를 정해요. 설정 → 「카드 배분」에서 테이블마다 바꿀 수 있어요.
 // 라운드. 카테고리가 여러 라운드에 걸치면 질문을 라운드별로 나눠 써서, 자리를 옮겨도 같은 질문이 다시 나오지 않아요.
 const ROUNDS = {
-  1: { name: '첫 만남', time: '7:20 – 7:50', minutes: 30, mix: { warm: 4, balance: 3, taste: 2, point: 1 }, cats: ['warm', 'balance', 'taste', 'point', 'love'],
+  1: { name: '첫 만남', time: '7:20 – 7:50', minutes: 30, mix: { warm: 4, balance: 3, taste: 2, point: 1, love: 1 }, cats: ['warm', 'balance', 'taste', 'point', 'love'],
        opener: { q: '이름 + 오늘 여기 오기 전에 한 일', hint: '짧게 한 바퀴 돌고 시작해요' },
        closer: { q: '다음 테이블에 가서 자랑하고 싶은, 여기서 들은 얘기 하나', hint: '이 카드가 끝나면 자리 옮길 준비!' },
        endTitle: '자리 옮길 시간이에요', endLead: '반가웠어요! 7:55에 다음 테이블에서 2라운드를 시작해요.', next: '2라운드 준비하기' },
-  2: { name: '새 얼굴', time: '7:55 – 8:30', minutes: 35, mix: { balance: 3, taste: 3, point: 1, table: 2 }, cats: ['balance', 'taste', 'point', 'table', 'love'],
+  2: { name: '새 얼굴', time: '7:55 – 8:30', minutes: 35, mix: { balance: 3, taste: 3, point: 1, table: 2, love: 2 }, cats: ['balance', 'taste', 'point', 'table', 'love'],
        opener: { q: '이름 + 요즘 빠진 것 하나', hint: '앞 테이블이랑 다른 소개로 가요' },
        closer: { q: '오늘 이 테이블에서 "어, 나도!" 했던 순간', hint: '이 카드가 끝나면 저녁 테이블로!' },
        endTitle: '저녁 먹으러 갈 시간이에요', endLead: '8:35부터 새 테이블에서 저녁과 함께 3라운드를 해요.', next: '3라운드 준비하기' },
-  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, slow: 1.2, mix: { bite: 3, life: 2, values: 2, table: 1 }, cats: ['bite', 'life', 'values', 'table', 'love'], lateCats: ['life', 'values'], lateAfter: 15,
+  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, slow: 1.2, mix: { bite: 3, life: 2, values: 2, table: 1, love: 2 }, cats: ['bite', 'life', 'values', 'table', 'love'], lateCats: ['life', 'values'], lateAfter: 15,
        opener: { q: '이름 + 오늘 지금까지 제일 기억에 남는 순간', hint: '먹으면서 한 바퀴' },
        closer: { q: '오늘 세 테이블 돌면서 제일 기억에 남는 한마디', hint: '누가 한 말인지 이름도 같이요!' },
        endTitle: '단체 사진 찍을 시간이에요', endLead: '9:15부터는 자유 시간! 카드를 더 쓰고 싶으면 아래 버튼으로 계속해요.', next: '자유 시간 카드 계속하기' },
@@ -441,7 +440,7 @@ const CATS = {
     '샤인머스캣 vs 딸기',
     '지금 제일 먹고 싶은 거',
   ] },
-  love: { name: '연애', emoji: '💘', color: '#FBE3EA', accent: '#C9587A', mood: '칩으로 고른 테이블만 나와요. 말하고 싶은 만큼만, 패스 OK.', manual: true, items: [
+  love: { name: '연애', emoji: '💘', color: '#FBE3EA', accent: '#C9587A', mood: '말하고 싶은 만큼만, 패스 OK.', items: [
     '이상형을 한 단어로 말하면?',
     '첫눈에 반하는 거, 믿어요?',
     { q: '연락은 자주 vs 할 말 있을 때만', hint: '이유도 한 줄' },
@@ -784,8 +783,6 @@ Screens.cards = {
     $('card').addEventListener('click', e => { if (e.target.closest('button')) return; this.flip(); });
     $('drawBtn').onclick = () => this.onPrimary();
     $('swapBtn').onclick = () => this.draw(true);
-    $('tailBtn').onclick = () => { if (!S.current?.revealed) return; S.tail = pick(TAILS.filter(t => t !== S.tail)); save(); this.renderFront(); };
-    $('freeBtn').onclick = () => startFree();
     $('nudgeGo').onclick = () => { S.nudgeAt = S.revealed; startFree(); };
     $('nudgeX').onclick = () => { S.nudgeAt = S.revealed; save(); this.tick(); };
   },
@@ -799,6 +796,9 @@ Screens.cards = {
     this.renderChips(); this.renderCard(true); this.tick();
   },
   renderChips() {
+    S.filter = null;
+    $('catChips').innerHTML = `<span class="chip on" style="pointer-events:none">💬 대화 카드</span>`;
+    return;
     const cats = R().cats.filter(c => c !== 'table' || people().length >= 2);
     $('catChips').innerHTML = `<button class="chip ${!S.filter ? 'on' : ''}" data-c="">🎲 랜덤</button>` + cats.map(c => {
       const n = poolOf(c).length, plan = planOf(S.round);
@@ -816,13 +816,13 @@ Screens.cards = {
     const special = { open: ['#FFF4D6', '#CFA23A', '👋', '첫 카드', '이번 테이블 첫 바퀴'], close: ['#E6EBD9', '#7D9A6E', '🌙', '마무리 카드', '이 테이블 마지막 카드예요'], none: ['#E6EBD9', '#7D9A6E', '💬', '카드 끝', '이번 라운드 카드를 다 썼어요'] }[card.cat];
     document.documentElement.style.setProperty('--cat-card', special ? special[0] : c.color);
     document.documentElement.style.setProperty('--cat-accent', special ? special[1] : c.accent);
-    $('backMark').textContent = special ? special[2] : c.emoji;
-    $('backCat').textContent = special ? special[3] : c.name;
-    $('backMood').textContent = special ? special[4] : c.mood;
+    $('backMark').textContent = special ? special[2] : '💬';
+    $('backCat').textContent = special ? special[3] : '대화 카드';
+    $('backMood').textContent = special ? special[4] : '';
   },
   renderFront() {
     const c = S.current;
-    const label = { open: '👋 첫 카드', close: '🌙 마무리 카드', none: '💬 카드 끝' }[c.cat] || `${CATS[c.cat].emoji} ${CATS[c.cat].name}`;
+    const label = { open: '👋 첫 카드', close: '🌙 마무리 카드', none: '💬 카드 끝' }[c.cat] || '💬 대화 카드';
     let body = '';
     if (c.type === 'none') body = `<div class="q sm">이번 라운드 카드를 다 썼어요</div><div class="sub">이제 카드 없이 자유롭게 얘기해요.<br>다른 라운드 카드는 남아 있어요.</div>`;
     else if (c.type === 'balance') body = `<div class="sub" style="margin:0 0 8px;font-size:17px;color:var(--ink)">${esc(c.q)}</div>
@@ -836,7 +836,6 @@ Screens.cards = {
     else if (c.type === 'table') body = `<div class="sub" style="margin:0 0 8px;font-weight:800;color:var(--cat-accent)">${esc(c.title)}</div><div class="q sm">${esc(c.q)}</div><div class="sub">${esc(c.hint || '')}</div>
       ${c.reveal ? (c.shown ? `<div class="reveal">${c.reveal}</div>` : `<div class="tool"><button data-act="reveal">👀 정답 공개</button></div>`) : ''}`;
     else body = `<div class="q">${esc(c.q)}</div>${c.hint ? `<div class="sub">${esc(c.hint)}</div>` : ''}<div class="tool"><button data-act="first">🎯 누가 먼저?</button><span id="toolOut"></span></div>`;
-    if (S.tail && c.type !== 'none') body += `<div class="tail"><small>🪝 방금 답 중에 제일 궁금한 사람한테</small>${esc(S.tail)}</div>`;
     const cnt = S.round && c.cat !== 'none' ? `${S.drawn[S.round] || 0}번째 카드` : '';
     $('front').innerHTML = `<div class="front-cat">${label}</div><div style="width:100%">${body}</div><div class="front-count">${cnt}</div>`;
     $('front').querySelectorAll('[data-act]').forEach(b => b.onclick = e => { e.stopPropagation(); this.tool(b.dataset.act); });
@@ -845,10 +844,9 @@ Screens.cards = {
   renderButtons() {
     const c = S.current;
     const closing = c.cat === 'close';
-    $('drawBtn').textContent = !c.revealed ? '카드 뒤집기' : c.type === 'none' ? '💬 자유 대화로' : closing ? '라운드 마치기' : c.free ? '💬 자유 대화로 이어가기' : '다음 카드';
-    $('drawBtn').className = 'btn ' + (c.revealed && (c.free || c.type === 'none') ? 'btn-sage' : 'btn-primary');
+    $('drawBtn').textContent = !c.revealed ? '카드 뒤집기' : c.type === 'none' ? '💬 자유 대화로' : closing ? '라운드 마치기' : '다음 카드';
+    $('drawBtn').className = 'btn ' + (c.revealed && c.type === 'none' ? 'btn-sage' : 'btn-primary');
     $('miniRow').style.visibility = c.revealed && c.type !== 'none' ? 'visible' : 'hidden';
-    $('freeBtn').innerHTML = c.free ? '<span>➡️</span>다음 카드' : '<span>💬</span>이 얘기 더 하기';
     $('swapBtn').disabled = c.cat === 'open' || c.cat === 'close';
     $('swapBtn').style.opacity = $('swapBtn').disabled ? .35 : 1;
   },
@@ -872,7 +870,6 @@ Screens.cards = {
     if (!c.revealed) return this.flip();
     if (c.type === 'none') return startFree();
     if (c.cat === 'close') return go('finish');
-    if (c.free) return startFree();
     this.draw(false);
   },
   draw(swap) {
@@ -897,7 +894,7 @@ Screens.cards = {
       const ps = people();
       let name;
       if (ps.length >= 2) { const cand = ps.filter(p => p.name !== S.lastPick); name = pick(cand.length ? cand : ps).name; S.lastPick = name; }
-      else name = `카드 뽑은 사람부터 시계 방향 ${1 + Math.floor(Math.random() * TABLES.seats(S.table))}번째`;
+      else name = `읽은 사람 왼쪽으로 ${1 + Math.floor(Math.random() * TABLES.seats(S.table))}번째`;
       save();
       let k = 0; const names = ps.length >= 2 ? shuffle(ps.map(p => p.name)) : ['…'];
       const spin = setInterval(() => { if (out) out.innerHTML = `<span class="out">${esc(names[k++ % names.length])}</span>`; }, 70);
