@@ -270,19 +270,22 @@ const RULES = [
 const ROUND_RULES = { 1: '아는 사이끼리는 처음 보는 사람한테 먼저 질문을 넘겨요.' };
 const rulesFor = r => ROUND_RULES[r] ? [...RULES, ROUND_RULES[r]] : RULES;
 
-// 라운드. mix = 랜덤으로 나올 카테고리 비율, pace = 카드 한 장에 쓰는 분.
-// 라운드 시간 ÷ pace 만큼 장수를 정하고(첫 카드·마무리 카드 포함), mix 비율대로 나눠요. 설정 → 「카드 배분」에서 테이블마다 바꿀 수 있어요.
+// 카드 한 장에 테이블 전체가 쓰는 시간(분). 한 사람 20~30초 × 6~7명 기준, 밸런스·지목·한입 토크처럼 짧게 끝나는 건 더 짧게.
+const CAT_MIN = { warm: 2.5, taste: 2.5, whatif: 2.5, memory: 3, life: 3, values: 3.5, balance: 1.5, point: 1, bite: 1.5, mission: 3, table: 2, love: 2.5 };
+const OPEN_MIN = 3, CLOSE_MIN = 3;   // 첫 카드(한 바퀴 소개), 마무리 카드
+// 라운드. mix = 랜덤으로 나올 카테고리 비율, slow = 그 라운드에서 시간이 더 걸리는 배수(저녁 먹으면서는 1.2).
+// 라운드 시간에서 첫·마무리 카드를 빼고, 남은 시간이 꽉 차도록 mix 비율대로 장수를 정해요. 설정 → 「카드 배분」에서 테이블마다 바꿀 수 있어요.
 // 라운드. 카테고리가 여러 라운드에 걸치면 질문을 라운드별로 나눠 써서, 자리를 옮겨도 같은 질문이 다시 나오지 않아요.
 const ROUNDS = {
-  1: { name: '첫 만남', time: '7:20 – 7:50', minutes: 30, pace: 2.5, mix: { warm: 3, balance: 2, taste: 1, whatif: 1, point: 1, mission: 2 }, cats: ['warm', 'balance', 'taste', 'whatif', 'point', 'mission', 'love'],
+  1: { name: '첫 만남', time: '7:20 – 7:50', minutes: 30, mix: { warm: 3, balance: 2, taste: 1, whatif: 1, point: 1, mission: 2 }, cats: ['warm', 'balance', 'taste', 'whatif', 'point', 'mission', 'love'],
        opener: { q: '이름 + 오늘 여기 오기 전에 한 일', hint: '짧게 한 바퀴 돌고 시작해요' },
        closer: { q: '다음 테이블에 가서 자랑하고 싶은, 여기서 들은 얘기 하나', hint: '이 카드가 끝나면 자리 옮길 준비!' },
        endTitle: '자리 옮길 시간이에요', endLead: '반가웠어요! 7:55에 다음 테이블에서 2라운드를 시작해요.', next: '2라운드 준비하기' },
-  2: { name: '새 얼굴', time: '7:55 – 8:30', minutes: 35, pace: 2.5, mix: { balance: 2, whatif: 2, memory: 2, taste: 1, point: 1, mission: 2, table: 2 }, cats: ['balance', 'point', 'whatif', 'memory', 'taste', 'mission', 'table', 'love'],
+  2: { name: '새 얼굴', time: '7:55 – 8:30', minutes: 35, mix: { balance: 2, whatif: 2, memory: 2, taste: 1, point: 1, mission: 2, table: 2 }, cats: ['balance', 'point', 'whatif', 'memory', 'taste', 'mission', 'table', 'love'],
        opener: { q: '이름 + 요즘 빠진 것 하나', hint: '앞 테이블이랑 다른 소개로 가요' },
        closer: { q: '오늘 이 테이블에서 "어, 나도!" 했던 순간', hint: '이 카드가 끝나면 저녁 테이블로!' },
        endTitle: '저녁 먹으러 갈 시간이에요', endLead: '8:35부터 새 테이블에서 저녁과 함께 3라운드를 해요.', next: '3라운드 준비하기' },
-  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, pace: 3, mix: { bite: 3, memory: 1, life: 2, values: 2, table: 1, mission: 2 }, cats: ['bite', 'life', 'memory', 'values', 'table', 'mission', 'love'], lateCats: ['life', 'values'], lateAfter: 15,
+  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, slow: 1.2, mix: { bite: 3, memory: 1, life: 2, values: 2, table: 1, mission: 2 }, cats: ['bite', 'life', 'memory', 'values', 'table', 'mission', 'love'], lateCats: ['life', 'values'], lateAfter: 15,
        opener: { q: '이름 + 오늘 지금까지 제일 기억에 남는 순간', hint: '먹으면서 한 바퀴' },
        closer: { q: '오늘 세 테이블 돌면서 제일 기억에 남는 한마디', hint: '누가 한 말인지 이름도 같이요!' },
        endTitle: '단체 사진 찍을 시간이에요', endLead: '9:15부터는 자유 시간! 카드를 더 쓰고 싶으면 아래 버튼으로 계속해요.', next: '자유 시간 카드 계속하기' },
@@ -468,7 +471,7 @@ const CATS = {
     { r: [1], title: '숫자로 말해요', desc: '하나 둘 셋 하면 손가락으로 동시에! 「오늘 내 텐션 1~5」. 같은 숫자끼리 하이파이브!' },
     { r: [1], title: '이모지 자기소개', desc: '각자 폰에 이모지 3개로 나를 표현해서 보여 줘요. 나머지가 뜻을 맞혀요.' },
     { r: [2], title: '두 개의 진실, 하나의 거짓', desc: '룰렛에 걸린 사람이 자기 얘기 3개를 말해요. 하나는 거짓말! 나머지가 맞혀요.', roulette: true },
-    { r: [2], title: '1분 토크', desc: '룰렛에 걸린 사람이 1분 동안 "요즘 제일 빠진 것" 얘기. 끝나면 질문 2개 받기!', roulette: true, timer: 60, free: true },
+    { r: [2], title: '30초 토크', desc: '룰렛에 걸린 사람이 30초 동안 "요즘 제일 빠진 것" 얘기. 끝나면 나머지가 질문 하나씩!', roulette: true, timer: 30, free: true },
     { r: [2], title: '사진 한 장', desc: 'SNS에 이미 올린 사진 중에 하나씩 보여 주고 사연 30초. 사진첩은 안 열어도 돼요.' },
     { r: [2], title: '첫인상 한 단어', desc: '룰렛에 걸린 사람의 첫인상을 다 같이 한 단어씩. 주인공이 제일 맞는 걸 골라요.', roulette: true },
     { r: [2, 4], title: '숫자 맞히기', desc: '각자 사진첩 사진이 몇 장일지 예상해서 말하고 한 명씩 확인! 제일 가깝게 맞힌 사람이 승.' },
@@ -651,14 +654,18 @@ function tableCards() {
 function autoPlan(rn) {
   const r = ROUNDS[rn];
   if (!r.mix || !r.minutes) return null;
-  const total = Math.max(1, Math.round(r.minutes / r.pace) - (r.opener ? 1 : 0) - (r.closer ? 1 : 0));
-  const ent = Object.entries(r.mix), sum = ent.reduce((a, [, w]) => a + w, 0);
-  const raw = ent.map(([c, w]) => [c, (w * total) / sum]);
+  const avail = r.minutes - (r.opener ? OPEN_MIN : 0) - (r.closer ? CLOSE_MIN : 0);
+  const ent = Object.entries(r.mix), per = ent.reduce((a, [c, w]) => a + w * cardMin(rn, c), 0);
+  const k = avail / per;   // mix 비율을 몇 배 해야 시간이 꽉 차는지
+  const raw = ent.map(([c, w]) => [c, w * k]);
+  const total = Math.max(1, Math.round(raw.reduce((a, [, x]) => a + x, 0)));
   const plan = Object.fromEntries(raw.map(([c, x]) => [c, Math.floor(x)]));
   let left = total - Object.values(plan).reduce((a, b) => a + b, 0);
   raw.sort((a, b) => (b[1] % 1) - (a[1] % 1)).forEach(([c]) => { if (left > 0) { plan[c]++; left--; } });
   return plan;
 }
+const cardMin = (rn, c) => (CAT_MIN[c] || 2.5) * (ROUNDS[rn].slow || 1);
+const planMinutes = (rn, plan) => Object.entries(plan).reduce((a, [c, n]) => a + n * cardMin(rn, c), 0) + (ROUNDS[rn].opener ? OPEN_MIN : 0) + (ROUNDS[rn].closer ? CLOSE_MIN : 0);
 const planOf = rn => (S.plans && S.plans[rn]) || autoPlan(rn);
 const catN = c => (S.catN && S.catN[S.round] && S.catN[S.round][c]) || 0;
 function weighted(list) { let t = list.reduce((a, [, w]) => a + w, 0) * Math.random(); for (const [c, w] of list) { if ((t -= w) < 0) return c; } return list[list.length - 1][0]; }
@@ -1018,10 +1025,10 @@ const Settings = {
     wrap.className = 'sheet-backdrop';
     const render = () => {
       const total = cats.reduce((a, c) => a + (plan[c] || 0), 0) + (r.opener ? 1 : 0) + (r.closer ? 1 : 0);
-      const est = Math.round(total * r.pace);
+      const est = Math.round(planMinutes(rn, plan));
       wrap.innerHTML = `<div class="sheet"><h2>카드 배분</h2>
-        <div class="meta">${rn}라운드 ${esc(r.name)} · 랜덤으로 카테고리별 몇 장씩 나올지 정해요. 첫 카드·마무리 카드 포함 ${total}장, 장당 ${r.pace}분이면 약 ${est}분 (라운드 ${r.minutes}분)</div>
-        ${cats.map(c => `<div class="plan-row"><span>${CATS[c].emoji} ${CATS[c].name}<small>${catN(c)}장 나옴</small></span>
+        <div class="meta">${rn}라운드 ${esc(r.name)} · 랜덤으로 카테고리별 몇 장씩 나올지 정해요. 첫 카드·마무리 카드 포함 ${total}장, 예상 약 ${est}분 (라운드 ${r.minutes}분)</div>
+        ${cats.map(c => `<div class="plan-row"><span>${CATS[c].emoji} ${CATS[c].name}<small>장당 약 ${Math.round(cardMin(rn, c) * 10) / 10}분 · ${catN(c)}장 나옴</small></span>
           <button class="plan-b" data-m="${c}">−</button><b>${plan[c] || 0}</b><button class="plan-b" data-p="${c}">+</button></div>`).join('')}
         <div class="meta" style="margin-top:10px">다 나오고도 시간이 남으면 같은 비율로 계속 나와요. 칩으로 직접 고른 카드도 장수에 들어가요.</div>
         <button class="btn btn-primary" data-act="save">이대로 저장</button>
