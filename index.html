@@ -271,19 +271,19 @@ const OPEN_MIN = 3, CLOSE_MIN = 3;   // 첫 카드(한 바퀴 소개), 마무리
 // 다 쓰고도 시간이 남으면 같은 비율로 계속 나와요. slow = 시간 계산용 배수(저녁 먹으면서는 1.2). 설정 → 「카드 배분」에서 바꿀 수 있어요.
 // 라운드. 카테고리가 여러 라운드에 걸치면 질문을 라운드별로 나눠 써서, 자리를 옮겨도 같은 질문이 다시 나오지 않아요.
 const ROUNDS = {
-  1: { name: '첫 만남', time: '7:20 – 7:50', minutes: 30, plan: { warm: 5, balance: 4, taste: 4, love: 4, point: 3 }, cats: ['warm', 'balance', 'taste', 'point', 'love'],
+  1: { name: '첫 만남', time: '7:25 – 7:55', minutes: 30, plan: { warm: 5, balance: 4, taste: 4, love: 4, point: 3 }, cats: ['warm', 'balance', 'taste', 'point', 'love'],
        opener: { q: '이름 + 오늘 여기 오기 전에 한 일', hint: '짧게 한 바퀴 돌고 시작해요' },
        closer: { q: '다음 테이블에 가서 자랑하고 싶은, 여기서 들은 얘기 하나', hint: '이 카드가 끝나면 자리 옮길 준비!' },
-       endTitle: '자리 옮길 시간이에요', endLead: '반가웠어요! 7:55에 다음 테이블에서 2라운드를 시작해요.', next: '2라운드 준비하기' },
-  2: { name: '새 얼굴', time: '7:55 – 8:30', minutes: 35, plan: { balance: 6, taste: 6, love: 5, point: 3 }, cats: ['balance', 'taste', 'point', 'love'],
+       endTitle: '자리 옮길 시간이에요', endLead: '반가웠어요! 8:00에 다음 테이블에서 2라운드를 시작해요.', next: '2라운드 준비하기' },
+  2: { name: '새 얼굴', time: '8:00 – 8:35', minutes: 35, plan: { balance: 6, taste: 6, love: 5, point: 3 }, cats: ['balance', 'taste', 'point', 'love'],
        opener: { q: '이름 + 요즘 빠진 것 하나', hint: '앞 테이블이랑 다른 소개로 가요' },
        closer: { q: '오늘 이 테이블에서 "어, 나도!" 했던 순간', hint: '이 카드가 끝나면 저녁 테이블로!' },
-       endTitle: '저녁 먹으러 갈 시간이에요', endLead: '8:35부터 새 테이블에서 저녁과 함께 3라운드를 해요.', next: '3라운드 준비하기' },
-  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, slow: 1.2, plan: { bite: 5, life: 5, values: 5, love: 5 }, cats: ['bite', 'life', 'values', 'love'], lateCats: ['life', 'values'], lateAfter: 15,
+       endTitle: '저녁 먹으러 갈 시간이에요', endLead: '8:40부터 새 테이블에서 저녁과 함께 3라운드를 해요.', next: '3라운드 준비하기' },
+  3: { name: '저녁 테이블', time: '8:40 – 9:20', minutes: 40, slow: 1.2, plan: { bite: 5, life: 5, values: 5, love: 5 }, cats: ['bite', 'life', 'values', 'love'], lateCats: ['life', 'values'], lateAfter: 15,
        opener: { q: '이름 + 오늘 지금까지 제일 기억에 남는 순간', hint: '먹으면서 한 바퀴' },
        closer: { q: '오늘 세 테이블 돌면서 제일 기억에 남는 한마디', hint: '누가 한 말인지 이름도 같이요!' },
-       endTitle: '단체 사진 찍을 시간이에요', endLead: '9:15부터는 자유 시간! 카드를 더 쓰고 싶으면 아래 버튼으로 계속해요.', next: '자유 시간 카드 계속하기' },
-  4: { name: '자유 시간', time: '9:15 –', minutes: 0, cats: ['warm', 'balance', 'taste', 'recommend', 'tmi', 'bite', 'life', 'values', 'point', 'love'],
+       endTitle: '단체 사진 찍을 시간이에요', endLead: '9:20부터는 자유 시간! 카드를 더 쓰고 싶으면 아래 버튼으로 계속해요.', next: '자유 시간 카드 계속하기' },
+  4: { name: '자유 시간', time: '9:20 –', minutes: 0, cats: ['warm', 'balance', 'taste', 'recommend', 'tmi', 'bite', 'life', 'values', 'point', 'love'],
        opener: null, closer: null, endTitle: '오늘 정말 반가웠어요', endLead: '더 놀다 가도 돼요!', next: '처음 화면으로' },
 };
 
@@ -564,9 +564,9 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 function guessRound() {
   const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
   if (d.getMonth() !== 10 || d.getDate() !== 12) return 1;
-  if (m < 19 * 60 + 52) return 1;
-  if (m < 20 * 60 + 32) return 2;
-  if (m < 21 * 60 + 14) return 3;
+  if (m < 19 * 60 + 57) return 1;
+  if (m < 20 * 60 + 37) return 2;
+  if (m < 21 * 60 + 19) return 3;
   return 4;
 }
 
