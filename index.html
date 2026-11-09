@@ -192,7 +192,7 @@ p{margin:0}
         <div class="back-mark" id="backMark">?</div>
         <div class="back-cat" id="backCat"></div>
         <div class="back-mood" id="backMood"></div>
-        <div class="back-tap">이번 카드는 <b>지난번 읽은 사람의 왼쪽</b>이<br>뒤집고 소리 내서 읽어 주세요</div>
+        <div class="back-tap">폰을 <b>왼쪽 사람</b>에게 넘겨 주세요<br>받은 사람이 눌러서 소리 내 읽어요</div>
       </div>
       <div class="face front" id="front"></div>
     </div>
@@ -253,7 +253,8 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const TABLES = { count: 9, seats: n => (n >= 8 ? 7 : 6), label: n => (n >= 8 ? '2층 소파' : '1층') };
 
 const RULES = [
-  '카드를 뽑은 사람 왼쪽부터 돌아가며 답해요.',
+  '폰 하나를 돌려 가며 봐요. 카드 한 장마다 왼쪽 사람에게 넘겨요.',
+  '카드를 읽은 사람의 왼쪽부터 돌아가며 답해요.',
   '한 단어로 답해도 충분해요. 어려우면 "패스".',
   '더 궁금하면 계속 물어봐요. 얘기가 길어지면 카드는 잠깐 쉬어도 돼요.',
   '나이, 직업, 연애는 오늘은 안 물어봐요.',
@@ -970,7 +971,7 @@ const Settings = {
       if (act === 'people') go('rules');
       if (act === 'move') { selTable = S.table; selRound = S.round; go('start'); }
       if (act === 'timer') { const t = Date.now(); S.timers[S.round] = { startedAt: t, endsAt: t + R().minutes * 60000 }; delete S.timeUpSeen[S.round]; save(); Screens.cards.tick(); }
-      if (act === 'finish') go('finish');
+      if (act === 'finish' && confirm('이 라운드를 마칠까요?')) go('finish');
       if (act === 'reset' && confirm('뽑은 카드 기록까지 모두 지워져요.\n처음부터 다시 시작할까요?')) { S = defaultState(); Store.clear(); selTable = tableFromUrl(); selRound = null; go('start'); }
     });
     document.body.appendChild(wrap);
