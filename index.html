@@ -140,6 +140,11 @@ p{margin:0}
 .sheet{width:100%;max-width:520px;max-height:88dvh;overflow:auto;background:var(--surface);border-radius:24px 24px 0 0;padding:18px 20px calc(22px + env(safe-area-inset-bottom));box-shadow:var(--shadow)}
 .sheet .meta{font-size:14px;color:var(--muted);margin-bottom:12px}
 .sheet .btn{min-height:50px;font-size:16px;margin-top:8px}
+.plan-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.plan-row span{flex:1;font-size:16px;font-weight:700}
+.plan-row small{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+.plan-row b{min-width:28px;text-align:center;font-size:20px}
+.plan-b{width:44px;height:44px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);font-size:22px;font-weight:700}
 .btn-danger{background:#FFF1EE;color:var(--coral-deep);border:1.5px solid rgba(210,105,79,.3)}
 </style>
 </head>
@@ -257,7 +262,7 @@ const RULES = [
   '카드를 읽은 사람의 왼쪽부터 돌아가며 답해요.',
   '한 단어로 답해도 충분해요. 어려우면 "패스".',
   '더 궁금하면 계속 물어봐요. 얘기가 길어지면 카드는 잠깐 쉬어도 돼요.',
-  '나이, 직업, 연애는 오늘은 안 물어봐요.',
+  '나이, 직업은 안 물어봐요. 연애 얘기는 다들 원할 때 「💘 연애」 칩으로.',
   '테이블 모두 별로면 "카드 바꾸기".',
 ];
 
@@ -265,21 +270,23 @@ const RULES = [
 const ROUND_RULES = { 1: '아는 사이끼리는 처음 보는 사람한테 먼저 질문을 넘겨요.' };
 const rulesFor = r => ROUND_RULES[r] ? [...RULES, ROUND_RULES[r]] : RULES;
 
+// 라운드. mix = 랜덤으로 나올 카테고리 비율, pace = 카드 한 장에 쓰는 분.
+// 라운드 시간 ÷ pace 만큼 장수를 정하고(첫 카드·마무리 카드 포함), mix 비율대로 나눠요. 설정 → 「카드 배분」에서 테이블마다 바꿀 수 있어요.
 // 라운드. 카테고리가 여러 라운드에 걸치면 질문을 라운드별로 나눠 써서, 자리를 옮겨도 같은 질문이 다시 나오지 않아요.
 const ROUNDS = {
-  1: { name: '첫 만남', time: '7:20 – 7:50', minutes: 30, cats: ['warm', 'balance', 'taste', 'whatif', 'point', 'mission'],
+  1: { name: '첫 만남', time: '7:20 – 7:50', minutes: 30, pace: 2.5, mix: { warm: 3, balance: 2, taste: 1, whatif: 1, point: 1, mission: 2 }, cats: ['warm', 'balance', 'taste', 'whatif', 'point', 'mission', 'love'],
        opener: { q: '이름 + 오늘 여기 오기 전에 한 일', hint: '짧게 한 바퀴 돌고 시작해요' },
        closer: { q: '다음 테이블에 가서 자랑하고 싶은, 여기서 들은 얘기 하나', hint: '이 카드가 끝나면 자리 옮길 준비!' },
        endTitle: '자리 옮길 시간이에요', endLead: '반가웠어요! 7:55에 다음 테이블에서 2라운드를 시작해요.', next: '2라운드 준비하기' },
-  2: { name: '새 얼굴', time: '7:55 – 8:30', minutes: 35, cats: ['balance', 'point', 'whatif', 'memory', 'taste', 'mission', 'table'],
+  2: { name: '새 얼굴', time: '7:55 – 8:30', minutes: 35, pace: 2.5, mix: { balance: 2, whatif: 2, memory: 2, taste: 1, point: 1, mission: 2, table: 2 }, cats: ['balance', 'point', 'whatif', 'memory', 'taste', 'mission', 'table', 'love'],
        opener: { q: '이름 + 요즘 빠진 것 하나', hint: '앞 테이블이랑 다른 소개로 가요' },
        closer: { q: '오늘 이 테이블에서 "어, 나도!" 했던 순간', hint: '이 카드가 끝나면 저녁 테이블로!' },
        endTitle: '저녁 먹으러 갈 시간이에요', endLead: '8:35부터 새 테이블에서 저녁과 함께 3라운드를 해요.', next: '3라운드 준비하기' },
-  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, cats: ['bite', 'life', 'memory', 'values', 'table', 'mission'], lateCats: ['life', 'values'], lateAfter: 15,
+  3: { name: '저녁 테이블', time: '8:35 – 9:15', minutes: 40, pace: 3, mix: { bite: 3, memory: 1, life: 2, values: 2, table: 1, mission: 2 }, cats: ['bite', 'life', 'memory', 'values', 'table', 'mission', 'love'], lateCats: ['life', 'values'], lateAfter: 15,
        opener: { q: '이름 + 오늘 지금까지 제일 기억에 남는 순간', hint: '먹으면서 한 바퀴' },
        closer: { q: '오늘 세 테이블 돌면서 제일 기억에 남는 한마디', hint: '누가 한 말인지 이름도 같이요!' },
        endTitle: '단체 사진 찍을 시간이에요', endLead: '9:15부터는 자유 시간! 카드를 더 쓰고 싶으면 아래 버튼으로 계속해요.', next: '자유 시간 카드 계속하기' },
-  4: { name: '자유 시간', time: '9:15 –', minutes: 0, cats: ['balance', 'whatif', 'point', 'taste', 'memory', 'life', 'values', 'bite', 'warm', 'mission', 'table'],
+  4: { name: '자유 시간', time: '9:15 –', minutes: 0, cats: ['balance', 'whatif', 'point', 'taste', 'memory', 'life', 'values', 'bite', 'warm', 'mission', 'table', 'love'],
        opener: null, closer: null, endTitle: '오늘 정말 반가웠어요', endLead: '더 놀다 가도 돼요!', next: '처음 화면으로' },
 };
 
@@ -455,11 +462,13 @@ const CATS = {
     '지금 제일 먹고 싶은 거',
   ] },
   mission: { name: '테이블 미션', emoji: '🎯', color: '#DDF1EE', accent: '#3E9C8F', mood: '다 같이 하는 미니 게임!', type: 'mission', items: [
+    { r: [1, 4], title: '오늘의 주인공', desc: '룰렛에 걸린 사람한테 나머지가 돌아가며 질문 하나씩. 답 듣고 더 궁금하면 계속 물어봐요.', roulette: true, free: true },
     { r: [1], title: '공통점 찾기', desc: '2분 안에 테이블 전원이 해당하는 공통점 3개 찾기! "사람이다"는 빼고요.', timer: 120 },
     { r: [1], title: '동시에 외치기', desc: '하나 둘 셋 하면 다 같이 동시에 말해요. 같은 답 나온 사람끼리 하이파이브!', topics: ['치킨 브랜드', '여름 하면 떠오르는 것', '편의점 음료', '서울 데이트 장소', '아이돌 그룹', '라면 이름', '한강 하면 떠오르는 것', '노래방 애창곡 가수'] },
     { r: [1], title: '숫자로 말해요', desc: '하나 둘 셋 하면 손가락으로 동시에! 「오늘 내 텐션 1~5」. 같은 숫자끼리 하이파이브!' },
     { r: [1], title: '이모지 자기소개', desc: '각자 폰에 이모지 3개로 나를 표현해서 보여 줘요. 나머지가 뜻을 맞혀요.' },
     { r: [2], title: '두 개의 진실, 하나의 거짓', desc: '룰렛에 걸린 사람이 자기 얘기 3개를 말해요. 하나는 거짓말! 나머지가 맞혀요.', roulette: true },
+    { r: [2], title: '1분 토크', desc: '룰렛에 걸린 사람이 1분 동안 "요즘 제일 빠진 것" 얘기. 끝나면 질문 2개 받기!', roulette: true, timer: 60, free: true },
     { r: [2], title: '사진 한 장', desc: 'SNS에 이미 올린 사진 중에 하나씩 보여 주고 사연 30초. 사진첩은 안 열어도 돼요.' },
     { r: [2], title: '첫인상 한 단어', desc: '룰렛에 걸린 사람의 첫인상을 다 같이 한 단어씩. 주인공이 제일 맞는 걸 골라요.', roulette: true },
     { r: [2, 4], title: '숫자 맞히기', desc: '각자 사진첩 사진이 몇 장일지 예상해서 말하고 한 명씩 확인! 제일 가깝게 맞힌 사람이 승.' },
@@ -467,6 +476,24 @@ const CATS = {
     { r: [3], title: '오늘 저녁 평점', desc: '다 같이 오늘 저녁 메뉴를 10점 만점으로 평가하고 한 줄 평!' },
     { r: [4], title: '가방 속 물건', desc: '가방이나 주머니에서 물건 하나씩 꺼내 사연 소개. 제일 의외인 물건 투표!' },
     { r: [3], title: '우리 테이블 키워드', desc: '1분 안에 우리 테이블을 대표하는 키워드 하나 정하기. 정해지면 다 같이 사진 한 장!', timer: 60 },
+  ] },
+  love: { name: '연애', emoji: '💘', color: '#FBE3EA', accent: '#C9587A', mood: '칩으로 고른 테이블만 나와요. 말하고 싶은 만큼만, 패스 OK.', manual: true, items: [
+    '이상형을 한 단어로 말하면?',
+    '첫눈에 반하는 거, 믿어요?',
+    { q: '연락은 자주 vs 할 말 있을 때만', hint: '이유도 한 줄' },
+    '제일 좋아하는 데이트 코스',
+    { q: '고백은 하는 쪽 vs 받는 쪽', hint: '해 봤든 안 해 봤든 상상으로!' },
+    '좋아하는 사람 앞에서 나오는 나만의 습관',
+    '이런 순간에 설렌다, 하는 포인트 하나',
+    '최애 로맨스 영화나 드라마',
+    { q: '소개팅 vs 자연스러운 만남', hint: '어느 쪽이 더 끌려요?' },
+    '기념일은 챙기는 편? 안 챙기는 편?',
+    '연인이랑 꼭 가 보고 싶은 여행지',
+    { q: '연애 상담, 해 주는 쪽 vs 받는 쪽', hint: '주변에서 나는 어떤 역할?' },
+    { q: '사랑을 표현하는 방식, 나는 어느 쪽?', hint: '말 · 선물 · 같이 있는 시간 · 스킨십 · 챙겨 주기' },
+    '연인한테 제일 듣고 싶은 말 한마디',
+    '친구 연애 얘기 중에 제일 부러웠던 것',
+    '연애할 때 내가 제일 잘하는 것',
   ] },
   table: { name: '우리 테이블', emoji: '🪑', color: '#FDE8D7', accent: '#C9733C', mood: 'MIXER SEOUL에 적은 걸로 만든 카드예요.', type: 'table', items: [] },
 };
@@ -620,6 +647,22 @@ function tableCards() {
   return out.map(c => ({ ...c }));
 }
 
+// 이 라운드 랜덤 배분: { 카테고리: 장수 }. 설정에서 바꾼 값이 있으면 그걸 써요.
+function autoPlan(rn) {
+  const r = ROUNDS[rn];
+  if (!r.mix || !r.minutes) return null;
+  const total = Math.max(1, Math.round(r.minutes / r.pace) - (r.opener ? 1 : 0) - (r.closer ? 1 : 0));
+  const ent = Object.entries(r.mix), sum = ent.reduce((a, [, w]) => a + w, 0);
+  const raw = ent.map(([c, w]) => [c, (w * total) / sum]);
+  const plan = Object.fromEntries(raw.map(([c, x]) => [c, Math.floor(x)]));
+  let left = total - Object.values(plan).reduce((a, b) => a + b, 0);
+  raw.sort((a, b) => (b[1] % 1) - (a[1] % 1)).forEach(([c]) => { if (left > 0) { plan[c]++; left--; } });
+  return plan;
+}
+const planOf = rn => (S.plans && S.plans[rn]) || autoPlan(rn);
+const catN = c => (S.catN && S.catN[S.round] && S.catN[S.round][c]) || 0;
+function weighted(list) { let t = list.reduce((a, [, w]) => a + w, 0) * Math.random(); for (const [c, w] of list) { if ((t -= w) < 0) return c; } return list[list.length - 1][0]; }
+
 function nextCard() {
   const r = R();
   if (r.opener && !S.openerDone[S.round]) { S.openerDone[S.round] = true; return { key: `open:${S.round}`, cat: 'open', type: 'q', ...r.opener }; }
@@ -627,21 +670,35 @@ function nextCard() {
   const avail = r.cats.filter(c => poolOf(c).length);
   if (!avail.length) return { key: 'none', cat: 'none', type: 'none' };
   let cat;
+  const plan = planOf(S.round);
   if (S.filter && avail.includes(S.filter)) cat = S.filter;
-  else {
+  else if (plan) {
+    // 배분에서 남은 장수만큼 가중치를 줘서 뽑아요. 같은 카테고리·미션류 연속은 피해요.
+    const late = r.lateCats && r.lateAfter && (!S.timers[S.round] || Date.now() - S.timers[S.round].startedAt < r.lateAfter * 60000);
+    const sp = c => c === 'mission' || c === 'table';
+    const cands = avail.filter(c => !CATS[c].manual && !(late && r.lateCats.includes(c)));
+    const spread = list => { const l = list.filter(([c]) => c !== S.lastCat && !(sp(c) && sp(S.lastCat))); return l.length ? l : list; };
+    let list = spread(cands.map(c => [c, (plan[c] || 0) - catN(c)]).filter(([, n]) => n > 0));
+    // 배분을 다 썼으면(시간이 남으면) 같은 비율로 계속
+    if (!list.length) list = spread(cands.map(c => [c, plan[c] || 0]).filter(([, n]) => n > 0));
+    if (!list.length) list = cands.map(c => [c, 1]);
+    cat = list.length ? weighted(list) : pick(avail);
+  } else {
     const n = (S.drawn[S.round] || 0);
     const special = avail.filter(c => c === 'mission' || c === 'table');
+    const pool0 = avail.filter(c => !CATS[c].manual);
     if (n % 4 === 3 && special.length) cat = pick(special);          // 네 장마다 미션이나 우리 테이블 카드
     else {
       const pointCap = (S.pointN && S.pointN[S.round] || 0) >= 2;
       const late = r.lateCats && r.lateAfter && (!S.timers[S.round] || Date.now() - S.timers[S.round].startedAt < r.lateAfter * 60000);
-      const normal = avail.filter(c => c !== 'mission' && c !== 'table' && c !== S.lastCat && !(c === 'point' && pointCap) && !(late && r.lateCats.includes(c)));
-      cat = pick(normal.length ? normal : avail);
+      const normal = avail.filter(c => !CATS[c].manual && c !== 'mission' && c !== 'table' && c !== S.lastCat && !(c === 'point' && pointCap) && !(late && r.lateCats.includes(c)));
+      cat = pick(normal.length ? normal : pool0.length ? pool0 : avail);
     }
   }
   const it = pick(poolOf(cat));
   S.drawn[S.round] = (S.drawn[S.round] || 0) + 1;
   S.lastCat = cat;
+  S.catN = S.catN || {}; S.catN[S.round] = S.catN[S.round] || {}; S.catN[S.round][cat] = (S.catN[S.round][cat] || 0) + 1;
   if (cat === 'point') { S.pointN = S.pointN || {}; S.pointN[S.round] = (S.pointN[S.round] || 0) + 1; }
   const card = makeCard(cat, it);
   if (card.topics) card.topic = pick(card.topics);
@@ -766,8 +823,9 @@ Screens.cards = {
   renderChips() {
     const cats = R().cats.filter(c => c !== 'table' || people().length >= 2);
     $('catChips').innerHTML = `<button class="chip ${!S.filter ? 'on' : ''}" data-c="">🎲 랜덤</button>` + cats.map(c => {
-      const n = poolOf(c).length;
-      return `<button class="chip ${S.filter === c ? 'on' : ''}" data-c="${c}" ${n ? '' : 'disabled style="opacity:.35"'}>${CATS[c].emoji} ${CATS[c].name}<small>${n}</small></button>`;
+      const n = poolOf(c).length, plan = planOf(S.round);
+      const tag = plan && !CATS[c].manual ? `${catN(c)}/${plan[c] || 0}` : n;
+      return `<button class="chip ${S.filter === c ? 'on' : ''}" data-c="${c}" ${n ? '' : 'disabled style="opacity:.35"'}>${CATS[c].emoji} ${CATS[c].name}<small>${tag}</small></button>`;
     }).join('');
     $('catChips').querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
       S.filter = b.dataset.c || null; save();
@@ -952,12 +1010,43 @@ Screens.finish = {
 /* ---------- 설정 ---------- */
 const Settings = {
   init() { $('gearBtn').onclick = () => this.open(); },
+  plan() {
+    const r = R(), rn = S.round;
+    let plan = { ...planOf(rn) };
+    const cats = r.cats.filter(c => !CATS[c].manual);
+    const wrap = document.createElement('div');
+    wrap.className = 'sheet-backdrop';
+    const render = () => {
+      const total = cats.reduce((a, c) => a + (plan[c] || 0), 0) + (r.opener ? 1 : 0) + (r.closer ? 1 : 0);
+      const est = Math.round(total * r.pace);
+      wrap.innerHTML = `<div class="sheet"><h2>카드 배분</h2>
+        <div class="meta">${rn}라운드 ${esc(r.name)} · 랜덤으로 카테고리별 몇 장씩 나올지 정해요. 첫 카드·마무리 카드 포함 ${total}장, 장당 ${r.pace}분이면 약 ${est}분 (라운드 ${r.minutes}분)</div>
+        ${cats.map(c => `<div class="plan-row"><span>${CATS[c].emoji} ${CATS[c].name}<small>${catN(c)}장 나옴</small></span>
+          <button class="plan-b" data-m="${c}">−</button><b>${plan[c] || 0}</b><button class="plan-b" data-p="${c}">+</button></div>`).join('')}
+        <div class="meta" style="margin-top:10px">다 나오고도 시간이 남으면 같은 비율로 계속 나와요. 칩으로 직접 고른 카드도 장수에 들어가요.</div>
+        <button class="btn btn-primary" data-act="save">이대로 저장</button>
+        <button class="btn btn-ghost" data-act="auto">시간에 맞게 되돌리기</button>
+        <button class="btn btn-text" data-act="close">닫기</button></div>`;
+    };
+    render();
+    wrap.addEventListener('click', e => {
+      if (e.target === wrap) return wrap.remove();
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.p) { plan[b.dataset.p] = (plan[b.dataset.p] || 0) + 1; return render(); }
+      if (b.dataset.m) { plan[b.dataset.m] = Math.max(0, (plan[b.dataset.m] || 0) - 1); return render(); }
+      if (b.dataset.act === 'auto') { plan = { ...autoPlan(rn) }; return render(); }
+      if (b.dataset.act === 'save') { S.plans = S.plans || {}; S.plans[rn] = plan; save(); Screens.cards.renderChips(); }
+      wrap.remove();
+    });
+    document.body.appendChild(wrap);
+  },
   open() {
     const wrap = document.createElement('div');
     wrap.className = 'sheet-backdrop';
     wrap.innerHTML = `<div class="sheet"><h2>설정</h2><div class="meta">${S.table}번 테이블 · ${S.round < 4 ? S.round + '라운드' : '자유 시간'} ${esc(R().name)}</div>
       <button class="btn btn-ghost" data-act="people">우리 테이블 사람 고치기</button>
       <button class="btn btn-ghost" data-act="move">테이블·라운드 바꾸기</button>
+      ${planOf(S.round) ? '<button class="btn btn-ghost" data-act="plan">카드 배분 (카테고리별 몇 장)</button>' : ''}
       ${R().minutes ? '<button class="btn btn-ghost" data-act="timer">이 라운드 시간 다시 재기</button>' : ''}
       <button class="btn btn-ghost" data-act="finish">이 라운드 마치기</button>
       <button class="btn btn-danger" data-act="reset">처음부터 다시 (초기화)</button>
@@ -969,6 +1058,7 @@ const Settings = {
       if (!act) return;
       close();
       if (act === 'people') go('rules');
+      if (act === 'plan') this.plan();
       if (act === 'move') { selTable = S.table; selRound = S.round; go('start'); }
       if (act === 'timer') { const t = Date.now(); S.timers[S.round] = { startedAt: t, endsAt: t + R().minutes * 60000 }; delete S.timeUpSeen[S.round]; save(); Screens.cards.tick(); }
       if (act === 'finish' && confirm('이 라운드를 마칠까요?')) go('finish');
