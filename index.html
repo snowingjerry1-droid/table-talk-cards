@@ -7,7 +7,7 @@
 location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(location.href);
 document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var b=document.createElement('div');b.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;background:#1A120D;color:#fff;border:1px solid #E3B57A;border-radius:14px;padding:12px 14px;font:600 14px/1.5 sans-serif;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)';b.innerHTML='사파리·크롬으로 열었어요. 카톡 창은 닫아도 돼요<br><span style="font-weight:500;opacity:.75">안 열렸으면 오른쪽 아래 ⋮ → 다른 브라우저로 열기</span>';b.onclick=function(){b.remove()};document.body.appendChild(b);},900);});}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="theme-color" content="#FBF6EE">
+<meta name="theme-color" content="#1C120C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>테이블 대화 카드</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
@@ -152,6 +152,36 @@ p{margin:0}
 .plan-row b{min-width:28px;text-align:center;font-size:20px}
 .plan-b{width:44px;height:44px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);font-size:22px;font-weight:700}
 .btn-danger{background:#FFF1EE;color:var(--coral-deep);border:1.5px solid rgba(210,105,79,.3)}
+
+/* ===== MIXER 무드(검정·주황) — 색만 덮어써요. 이 블록을 지우면 원래 밝은 화면으로 돌아가요 ===== */
+:root{
+  --bg:#1C120C;--surface:#2A1C14;--ink:#FBF8F4;--muted:#BFB4AA;--line:#4F3B2E;
+  --coral:#ED752F;--coral-deep:#FFA264;--coral-soft:rgba(237,117,47,.16);--sage:#6E8F64;
+  --shadow:0 14px 36px rgba(0,0,0,.5);
+}
+.btn-primary{color:#fff;box-shadow:0 8px 24px rgba(237,117,47,.35)}
+.btn-ghost{background:var(--surface)}
+.btn-text:active{background:rgba(255,255,255,.06)}
+.chip.on{background:var(--coral);border-color:var(--coral);color:#fff}
+.banner{border-color:rgba(237,117,47,.45)}
+.banner button{background:var(--surface);color:var(--coral-deep)}
+.banner-soft{background:rgba(127,162,122,.14);border-color:rgba(127,162,122,.45);color:#B9D3AE}
+.banner-soft button{color:#B9D3AE}
+.face{border-color:color-mix(in srgb,var(--cat-accent) 40%,#2A1C14)}
+.back{background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.06) 0 18%,transparent 19%),radial-gradient(circle at 80% 75%,rgba(255,255,255,.05) 0 22%,transparent 23%),linear-gradient(145deg,color-mix(in srgb,var(--cat-accent) 34%,#1F140E),color-mix(in srgb,var(--cat-accent) 14%,#170F0A))}
+.back-mark{background:rgba(255,255,255,.1);box-shadow:none}
+.back-cat{color:var(--ink)}
+.front{background:color-mix(in srgb,var(--cat-accent) 16%,#20150F)}
+.front-cat,.vs b{color:color-mix(in srgb,var(--cat-accent) 55%,#fff)}
+.vs .opt,.reveal{background:rgba(255,255,255,.08)}
+.tool button{background:rgba(255,255,255,.1);color:var(--ink)}
+.tool .out{background:var(--surface)}
+.tail{background:var(--surface)}
+.sheet-backdrop{background:rgba(0,0,0,.6)}
+.btn-danger{background:rgba(237,117,47,.12);border-color:rgba(237,117,47,.4)}
+.gear{background:var(--surface)}
+/* 설정 시트를 열면 3D 카드가 시트 위로 비치는 문제: 시트가 열린 동안 카드를 숨겨요 */
+body:has(.sheet-backdrop) .card-scene{visibility:hidden}
 </style>
 </head>
 <body>
