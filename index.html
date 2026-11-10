@@ -182,6 +182,51 @@ p{margin:0}
 .gear{background:var(--surface)}
 /* 설정 시트를 열면 3D 카드가 시트 위로 비치는 문제: 시트가 열린 동안 카드를 숨겨요 */
 body:has(.sheet-backdrop) .card-scene{visibility:hidden}
+
+/* ===== 카드 화면을 한 화면에 맞추기 (스크롤 없이). 화면 높이에 따라 카드가 줄어들어요 ===== */
+.screen[data-screen="cards"].is-active{height:100dvh;min-height:0;overflow-y:auto}
+.screen[data-screen="cards"] .card-scene{flex:1 1 auto;min-height:0;padding:4px 0}
+.screen[data-screen="cards"] .card{height:100%;min-height:220px;max-height:470px}
+.screen[data-screen="cards"] .mini-row{margin-top:6px}
+.screen[data-screen="cards"] .mini{min-height:40px;flex-direction:row;gap:6px;font-size:14px}
+.screen[data-screen="cards"] .mini span{font-size:16px}
+.screen[data-screen="cards"] .rules-mini .btn-text{min-height:32px;padding:4px 12px}
+@media (max-height:760px){
+  .screen{padding-top:calc(8px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .topbar-title{font-size:17px}
+  .timer{font-size:24px;padding:2px 0}
+  .bar{margin:6px 0 4px}
+  .chips{padding-top:4px;padding-bottom:4px}
+  .chip{padding:6px 11px;font-size:13px}
+  .btn{min-height:48px;font-size:17px;border-radius:16px}
+  .face{padding:20px 18px;border-radius:24px}
+  .back-mark{width:68px;height:68px;font-size:34px;margin-bottom:10px}
+  .back-cat{font-size:21px}
+  .back-mood,.back-tap{font-size:14px}
+  .back-tap{margin-top:10px}
+  .q{font-size:clamp(22px,6.4vw,30px)}
+  .q.sm{font-size:clamp(20px,5.6vw,26px)}
+  .sub{font-size:14px;margin-top:8px}
+  .vs .opt{min-height:84px;padding:12px 8px;font-size:clamp(17px,4.6vw,21px)}
+  .tool{margin-top:10px}
+  .tool button{padding:8px 12px;font-size:14px}
+  h1{font-size:25px;margin:4px 0 8px}
+  .rules li{font-size:16px;padding:8px 0}
+}
+@media (max-height:600px){
+  .screen{padding-top:calc(6px + env(safe-area-inset-top))}
+  .gear{width:38px;height:38px;font-size:17px;top:calc(6px + env(safe-area-inset-top))}
+  .topbar-title{font-size:16px}
+  .timer{font-size:21px}
+  .btn{min-height:44px;font-size:16px}
+  .face{padding:16px 14px}
+  .back-mark{width:54px;height:54px;font-size:28px}
+  .back-mood{display:none}
+  .q{font-size:clamp(20px,5.8vw,26px)}
+  .vs .opt{min-height:70px;font-size:clamp(16px,4.2vw,19px)}
+  .front-cat{top:12px}.front-count{bottom:10px}
+  .rules li{font-size:15px;padding:6px 0}
+}
 </style>
 </head>
 <body>
